@@ -1,5 +1,6 @@
 mod exec;
-use crate::{aux::{Operand, Status, Width}, op::{AddressingMode, Instruction, OPCODES}};
+mod addr;
+use crate::{aux::{Operand, Status, Width}, op::{AddressingMode, OPCODES}};
 
 /*
 Some Register Spec Stuff:
@@ -305,28 +306,28 @@ impl CPU {
 
         let operand = match op.mode {
             AddressingMode::Implied           => Operand::None,
-            AddressingMode::ImmediateAcc      => self.addr_imm_acc(),
-            AddressingMode::ImmediateIdx      => self.addr_imm_idx(),
-            AddressingMode::ImmediateByte     => self.addr_imm_byte(),
-            AddressingMode::Absolute          => self.addr_abs(),
-            AddressingMode::AbsoluteX         => self.addr_abs_x(),
-            AddressingMode::AbsoluteY         => self.addr_abs_y(),
-            AddressingMode::DirectPage        => self.addr_dp(),
-            AddressingMode::DirectPageX       => self.addr_dp_x(),
-            AddressingMode::DirectPageY       => self.addr_dp_y(),
-            AddressingMode::Indirect          => self.addr_ind_abs(),
-            AddressingMode::IndirectDP        => self.addr_dp_ind(),
-            AddressingMode::IndirectX         => self.addr_dp_ind_x(),
-            AddressingMode::IndirectY         => self.addr_dp_ind_y(),
-            AddressingMode::IndirectAbsoluteX => self.addr_ind_abs_x(),
-            AddressingMode::Relative          => self.addr_rel(),
-            AddressingMode::RelativeLong      => self.addr_rel_long(),
-            AddressingMode::Long              => self.addr_long(),
-            AddressingMode::LongX             => self.addr_long_x(),
-            AddressingMode::LongY             => self.addr_long_y(),
-            AddressingMode::StackRelative     => self.addr_sr(),
-            AddressingMode::StackRelativeY    => self.addr_sr_ind_y(),
-            AddressingMode::BlockMove         => self.addr_blk_mov(),
+            AddressingMode::ImmediateAcc      => addr::addr_imm_acc(self),
+            AddressingMode::ImmediateIdx      => addr::addr_imm_idx(self),
+            AddressingMode::ImmediateByte     => addr::addr_imm_byte(self),
+            AddressingMode::Absolute          => addr::addr_abs(self),
+            AddressingMode::AbsoluteX         => addr::addr_abs_x(self),
+            AddressingMode::AbsoluteY         => addr::addr_abs_y(self),
+            AddressingMode::DirectPage        => addr::addr_dp(self),
+            AddressingMode::DirectPageX       => addr::addr_dp_x(self),
+            AddressingMode::DirectPageY       => addr::addr_dp_y(self),
+            AddressingMode::Indirect          => addr::addr_ind_abs(self),
+            AddressingMode::IndirectDP        => addr::addr_dp_ind(self),
+            AddressingMode::IndirectX         => addr::addr_dp_ind_x(self),
+            AddressingMode::IndirectY         => addr::addr_dp_ind_y(self),
+            AddressingMode::IndirectAbsoluteX => addr::addr_ind_abs_x(self),
+            AddressingMode::Relative          => addr::addr_rel(self),
+            AddressingMode::RelativeLong      => addr::addr_rel_long(self),
+            AddressingMode::Long              => addr::addr_long(self),
+            AddressingMode::LongX             => addr::addr_long_x(self),
+            AddressingMode::LongY             => addr::addr_long_y(self),
+            AddressingMode::StackRelative     => addr::addr_sr(self),
+            AddressingMode::StackRelativeY    => addr::addr_sr_ind_y(self),
+            AddressingMode::BlockMove         => addr::addr_blk_mov(self),
         };
 
         // /*
@@ -359,242 +360,5 @@ impl CPU {
 
         self.status.z = (value & mask) == 0;
         self.status.n = (value & nmask) != 0;
-    }
-
-
-
-    // Immediate Addressing
-
-    pub fn addr_imm_acc(&mut self) -> Operand {
-        self.inst_cycles(1);
-        let value = if self.acc_size() == 1 {
-            let v = self.read8(((self.pb as u32) << 16) | self.pc as u32);
-            self.pc = self.pc.wrapping_add(1);
-            v as u16
-        } else {
-            let v = self.read16(((self.pb as u32) << 16) | self.pc as u32);
-            self.pc = self.pc.wrapping_add(2);
-            v
-        };
-
-        Operand::Immediate(value)
-    }
-
-    pub fn addr_imm_idx(&mut self) -> Operand {
-        self.inst_cycles(1);
-        let value = if self.idx_size() == 1 {
-            let v = self.read8(((self.pb as u32) << 16) | self.pc as u32);
-            self.pc = self.pc.wrapping_add(1);
-            v as u16
-        } else {
-            let v = self.read16(((self.pb as u32) << 16) | self.pc as u32);
-            self.pc = self.pc.wrapping_add(2);
-            v
-        };
-
-        Operand::Immediate(value)
-    }
-
-    pub fn addr_imm_byte(&mut self) -> Operand {
-        self.inst_cycles(1);
-        let value = self.read8(((self.pb as u32) << 16) | self.pc as u32);
-        self.pc = self.pc.wrapping_add(1);
-
-
-        Operand::Immediate(value as u16)
-    }
-
-    // Absolute Addressing
-
-    pub fn addr_abs(&mut self) -> Operand {
-        self.inst_cycles(2);
-        let addr = self.fetch16();
-        Operand::Address(((self.db as u32) << 16) | addr as u32)
-    }
-
-    pub fn addr_abs_x(&mut self) -> Operand {
-        self.inst_cycles(2);
-        let base = self.fetch16();
-        let addr = base.wrapping_add(self.x);
-        Operand::Address(((self.db as u32) << 16) | addr as u32)
-    }
-
-    pub fn addr_abs_y(&mut self) -> Operand {
-        self.inst_cycles(2);
-        let base = self.fetch16();
-        let addr = base.wrapping_add(self.y);
-        Operand::Address(((self.db as u32) << 16) | addr as u32)
-    }
-
-    // Direct Page Addressing
-
-    pub fn addr_dp(&mut self) -> Operand {
-        self.inst_cycles(2);
-        let offset = self.fetch8();
-        let addr = self.dp.wrapping_add(offset as u16) as u32;
-        Operand::Address(addr)
-    }
-
-    pub fn addr_dp_x(&mut self) -> Operand {
-        self.inst_cycles(3);
-        let offset = self.fetch8();
-        let addr = self.dp.wrapping_add(offset as u16).wrapping_add(self.x) as u32;
-        Operand::Address(addr)
-    }
-
-    pub fn addr_dp_y(&mut self) -> Operand {
-        self.inst_cycles(3);
-        let offset = self.fetch8();
-        let addr = self.dp.wrapping_add(offset as u16).wrapping_add(self.y) as u32;
-        Operand::Address(addr)
-    }
-
-    // Long Addressing
-
-    pub fn addr_long(&mut self) -> Operand {
-        self.inst_cycles(3);
-        let lo = self.fetch8() as u32;
-        let md = self.fetch8() as u32;
-        let hi = self.fetch8() as u32;
-        Operand::Address((hi << 16) | (md << 8) | lo)
-    }
-
-    pub fn addr_long_x(&mut self) -> Operand {
-        self.inst_cycles(3);
-        let lo = self.fetch8() as u32;
-        let md = self.fetch8() as u32;
-        let hi = self.fetch8() as u32;
-        Operand::Address(((hi << 16) | (md << 8) | lo).wrapping_add(self.x as u32))
-    }
-
-    pub fn addr_long_y(&mut self) -> Operand {
-        self.inst_cycles(3);
-        let lo = self.fetch8() as u32;
-        let md = self.fetch8() as u32;
-        let hi = self.fetch8() as u32;
-        Operand::Address(((hi << 16) | (md << 8) | lo).wrapping_add(self.y as u32))
-    }
-
-    // Indirect Addressing
-
-    pub fn addr_ind_abs(&mut self) -> Operand {
-        self.inst_cycles(5);
-        let ptr = self.fetch16();
-        let lo = self.read8(((self.db as u32) << 16) | ptr as u32) as u16;
-        let hi = self.read8(((self.db as u32) << 16) | (ptr.wrapping_add(1)) as u32) as u16;
-        let addr = ((hi << 8) | lo) as u32;
-        Operand::Address(addr)
-    }
-
-    pub fn addr_dp_ind(&mut self) -> Operand {
-        self.inst_cycles(5); // TODO: Fix cycle count to have full accuracy
-
-        let zp = self.fetch8();
-
-        let dp_mask = if self.emulation { 0xFF } else { 0xFFFF };
-        
-        let lo_addr = (self.dp.wrapping_add(zp as u16)) & dp_mask;
-        let hi_addr = (self.dp.wrapping_add(zp as u16).wrapping_add(1)) & dp_mask;
-        
-        let lo = self.read8(lo_addr as u32);
-        let hi = self.read8(hi_addr as u32);
-    
-        let addr = ((hi as u16) << 8) | (lo as u16);
-    
-        Operand::Address(((self.db as u32) << 16) | addr as u32)
-    }
-    
-    pub fn addr_dp_ind_x(&mut self) -> Operand {
-        self.inst_cycles(6);
-        let zp = self.fetch8().wrapping_add(self.x as u8);
-        let lo = self.read8(self.dp.wrapping_add(zp as u16) as u32);
-        let hi = self.read8(self.dp.wrapping_add(zp as u16 + 1) as u32);
-        let addr = (hi as u16) << 8 | lo as u16;
-        Operand::Address(((self.db as u32) << 16) | addr as u32)
-    }
-
-    pub fn addr_dp_ind_y(&mut self) -> Operand {
-        self.inst_cycles(5);
-        let zp = self.fetch8();
-        let lo = self.read8(self.dp.wrapping_add(zp as u16) as u32);
-        let hi = self.read8(self.dp.wrapping_add(zp as u16 + 1) as u32);
-        let addr = ((hi as u16) << 8 | lo as u16).wrapping_add(self.y);
-        Operand::Address(((self.db as u32) << 16) | addr as u32)
-    }
-
-    pub fn addr_ind_abs_x(&mut self) -> Operand {
-        self.inst_cycles(6);
-
-        let base  = self.fetch16();
-
-        let ptr = base.wrapping_add(self.x);
-
-        let addr = self.read16(ptr as u32);
-
-        Operand::Address(addr as u32)
-    }
-
-    pub fn addr_dp_long_ind(&mut self) -> Operand {
-        self.inst_cycles(6);
-        let zp = self.fetch8();
-        let base = self.dp.wrapping_add(zp as u16) as u32;
-        let lo = self.read8(base) as u32;
-        let md = self.read8(base + 1) as u32;
-        let hi = self.read8(base + 2) as u32;
-        Operand::Address((hi << 16) | (md << 8) | lo)
-    }
-
-    pub fn addr_dp_long_ind_y(&mut self) -> Operand {
-        self.inst_cycles(6); // Check
-        let zp = self.fetch8();
-        let base = self.dp.wrapping_add(zp as u16) as u32;
-        let lo = self.read8(base) as u32;
-        let md = self.read8(base + 1) as u32;
-        let hi = self.read8(base + 2) as u32;
-        Operand::Address(((hi << 16) | (md << 8) | lo).wrapping_add(self.y as u32))
-    }
-
-    // Stack Relative Addressing
-
-    pub fn addr_sr(&mut self) -> Operand {
-        self.inst_cycles(3);
-        let offset = self.fetch8();
-        Operand::Address(self.sp.wrapping_add(offset as u16) as u32)
-    }
-
-    pub fn addr_sr_ind_y(&mut self) -> Operand {
-        self.inst_cycles(6);
-        let offset = self.fetch8();
-        let lo = self.read8(self.sp.wrapping_add(offset as u16) as u32);
-        let hi = self.read8(self.sp.wrapping_add(offset as u16 + 1) as u32);
-        let addr = ((hi as u16) << 8 | lo as u16).wrapping_add(self.y);
-        Operand::Address(((self.db as u32) << 16) | addr as u32)
-    }
-
-    // Relative Addressing
-
-    pub fn addr_rel(&mut self) -> Operand {
-        self.inst_cycles(2);
-        let offset = self.fetch8() as i8;
-        let target = self.pc.wrapping_add(offset as u16);
-        Operand::Relative(target as i16)
-    }
-
-    pub fn addr_rel_long(&mut self) -> Operand {
-        self.inst_cycles(3);
-        let offset = self.fetch16() as i16;
-        let target = self.pc.wrapping_add(offset as u16);
-        Operand::Relative(target as i16)
-    }
-
-    // Special
-
-    pub fn addr_blk_mov(&mut self) -> Operand {
-        self.inst_cycles(2);
-
-        let src_bank = self.fetch8();
-        let dst_bank = self.fetch8();
-
-        Operand::Block { src_bank, dst_bank }
     }
 }
