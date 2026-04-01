@@ -351,11 +351,13 @@ pub const OPCODES: [Opcode; 256] = {
     table[0xF6] = Opcode { instr: Instruction::INC, mode: AddressingMode::DirectPageX, cycles: 6 };
     table[0xEE] = Opcode { instr: Instruction::INC, mode: AddressingMode::Absolute, cycles: 6 };
     table[0xFE] = Opcode { instr: Instruction::INC, mode: AddressingMode::AbsoluteX, cycles: 7 };
+    table[0x1A] = Opcode { instr: Instruction::INC, mode: AddressingMode::Implied, cycles: 2 }; 
 
     table[0xC6] = Opcode { instr: Instruction::DEC, mode: AddressingMode::DirectPage, cycles: 5 };
     table[0xD6] = Opcode { instr: Instruction::DEC, mode: AddressingMode::DirectPageX, cycles: 6 };
     table[0xCE] = Opcode { instr: Instruction::DEC, mode: AddressingMode::Absolute, cycles: 6 };
     table[0xDE] = Opcode { instr: Instruction::DEC, mode: AddressingMode::AbsoluteX, cycles: 7 };
+    table[0x3A] = Opcode { instr: Instruction::DEC, mode: AddressingMode::Implied, cycles: 2 };
 
     // Basic addition/subtraction
     table[0x69] = Opcode { instr: Instruction::ADC, mode: AddressingMode::ImmediateAcc, cycles: 2 };

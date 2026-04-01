@@ -127,7 +127,7 @@ impl CPU {
                 match width {
                     Width::ACC => { self.a },
                     Width::IDX => { self.x },
-                    _ => panic!("Tried to resolve value for Operand::None, but width invalid"),
+                    _ => panic!("Tried to resolve value for Operand::None, but width was invalid"),
                 }
             }
             Operand::Relative(_) => {
