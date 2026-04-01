@@ -396,6 +396,10 @@ impl CPU {
                 };
             },
 
+            Instruction::XBA => {
+                self.a = (self.a << 8) | (self.a >> 8);
+            }
+
             Instruction::TCD => {
                 self.dp = self.a;
                 self.set_zn(self.dp, true);

@@ -328,6 +328,8 @@ pub const OPCODES: [Opcode; 256] = {
     table[0x1B] = Opcode { instr: Instruction::TCS, mode: AddressingMode::Implied, cycles: 2 };
     table[0x3B] = Opcode { instr: Instruction::TSC, mode: AddressingMode::Implied, cycles: 2 };
 
+    table[0xEB] = Opcode { instr: Instruction::XBA, mode: AddressingMode::Implied, cycles: 3 };
+
     table[0x54] = Opcode { instr: Instruction::MVN, mode: AddressingMode::BlockMove, cycles: 0 }; // Cycles covered in code
     table[0x44] = Opcode { instr: Instruction::MVP, mode: AddressingMode::BlockMove, cycles: 0 }; // Cycles covered in code
 
@@ -508,6 +510,9 @@ pub const OPCODES: [Opcode; 256] = {
     // Mode switching
     table[0xC2] = Opcode { instr: Instruction::REP, mode: AddressingMode::ImmediateByte, cycles: 3 };
     table[0xE2] = Opcode { instr: Instruction::SEP, mode: AddressingMode::ImmediateByte, cycles: 3 };
+
+    // Reserved
+    table[0x42] = Opcode { instr: Instruction::WDM, mode: AddressingMode::Implied, cycles: 2 };
 
     table // Don't remove
 };
