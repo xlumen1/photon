@@ -297,6 +297,7 @@ impl CPU {
         }
 
         let opcode = self.fetch8();
+        let source = self.pc as u32 - 1 + ((self.pb as u32) << 16);
         let op = &OPCODES[opcode as usize];
 
         self.inst_cycles(op.cycles as i16);
@@ -329,9 +330,11 @@ impl CPU {
 
         // /*
         #[cfg(debug_assertions)]
-        println!("[photon] Executing {}({:02X}) with mode {} => {}",
+        println!("[photon] Executing {}({:02X}) at ${:06X} for {:04} cycles with mode {} => {}",
                 op.instr.as_str(),
                 opcode,
+                source,
+                self.ready_counter,
                 op.mode.as_str(),
                 operand,
         );
