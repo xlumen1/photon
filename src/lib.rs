@@ -60,6 +60,16 @@ pub extern "C" fn set_pc_full(cpu: *mut CPU, pos: u32) {
 }
 
 #[unsafe(no_mangle)]
+pub extern "C" fn reset(cpu: *mut CPU) {
+    if cpu.is_null() {
+        return;
+    }
+
+    let cpu_ref = unsafe { &mut *cpu };
+    cpu_ref.reset();
+}
+
+#[unsafe(no_mangle)]
 pub extern "C" fn is_halted(cpu: *const CPU) -> u8 {
     if cpu.is_null() {
         return 0;

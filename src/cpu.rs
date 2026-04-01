@@ -82,12 +82,20 @@ impl CPU {
         self.ready_counter == 0
     }
 
+    pub fn reset(&mut self) {
+        self.ready_counter = 0; // Set ready
+        self.pb = 0;
+        self.pc = self.read16(0xFFFC);
+        #[cfg(debug_assertions)]
+        println!("[photon] Jumping to RESV at ${:04X}", self.pc);
+    }
+
     fn acc_size(&self) -> u8 { if self.status.m { 1 } else { 2 } }
 
     fn idx_size(&self) -> u8 { if self.status.x { 1 } else { 2 } }
 
     fn inst_cycles(&mut self, cycles: i16) {
-        self.ready_counter += cycles - 1; // One cycle was already consumed in fetching, so don't touch this
+        self.ready_counter += cycles;
     }
 
     fn resolve_value(&mut self, operand: &Operand, width: Width) -> u16 {
