@@ -161,7 +161,7 @@ pub(super) fn addr_ind_abs_x(s: &mut CPU) -> Operand {
     let addr = s.read16(ptr as u32);
     Operand::Address(addr as u32)
 }
-
+/*
 pub(super) fn addr_dp_long_ind(s: &mut CPU) -> Operand {
     s.inst_cycles(6);
     let zp = s.fetch8();
@@ -181,6 +181,7 @@ pub(super) fn addr_dp_long_ind_y(s: &mut CPU) -> Operand {
     let hi = s.read8(base + 2) as u32;
     Operand::Address(((hi << 16) | (md << 8) | lo).wrapping_add(s.y as u32))
 }
+*/
 
 // Stack Relative Addressing
 
