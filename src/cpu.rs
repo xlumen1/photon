@@ -1,6 +1,7 @@
 mod exec;
 mod addr;
 use crate::{aux::{Operand, Status, Width}, op::{AddressingMode, OPCODES}};
+use colored::Colorize; 
 
 /*
 Some Register Spec Stuff:
@@ -333,11 +334,11 @@ impl CPU {
         // /*
         #[cfg(debug_assertions)]
         println!("[photon] Executing {}({:02X}) at ${:06X} for {:04} cycles with mode {} => {}",
-                op.instr.as_str(),
+                op.instr.as_str().red(),
                 opcode,
                 source,
                 self.ready_counter,
-                op.mode.as_str(),
+                op.mode.as_str().blue(),
                 operand,
         );
         // */
