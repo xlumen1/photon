@@ -7,9 +7,9 @@ use super::CPU;
 pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
     match instr {
         // --- Load/Store ---
-        Instruction::LDA => { let val = s.resolve_value(&op, Width::ACC); s.a = val; s.set_zn(val, true); },
-        Instruction::LDX => { let val = s.resolve_value(&op, Width::IDX); s.x = val; s.set_zn(val, false); },
-        Instruction::LDY => { let val = s.resolve_value(&op, Width::IDX); s.y = val; s.set_zn(val, false); },
+        Instruction::LDA => { let val = s.resolve_value(&op, Width::ACC); s.a = val; s.set_zn(val, Width::ACC); },
+        Instruction::LDX => { let val = s.resolve_value(&op, Width::IDX); s.x = val; s.set_zn(val, Width::IDX); },
+        Instruction::LDY => { let val = s.resolve_value(&op, Width::IDX); s.y = val; s.set_zn(val, Width::IDX); },
     
         Instruction::STA => s.resolve_store(&op, s.a, Width::ACC),
         Instruction::STX => s.resolve_store(&op, s.x, Width::IDX),
@@ -18,23 +18,23 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
         // --- Transfers ---
         Instruction::TAX => {
             s.x = if s.status.x { s.a & 0xFF } else { s.a };
-            s.set_zn(s.x, false);
+            s.set_zn(s.x, Width::IDX);
         },
         Instruction::TAY => {
             s.y = if s.status.x { s.a & 0xFF } else { s.a };
-            s.set_zn(s.y, false);
+            s.set_zn(s.y, Width::IDX);
         },
         Instruction::TXA => {
             s.a = if s.status.m { s.x & 0xFF } else { s.x };
-            s.set_zn(s.a, true);
+            s.set_zn(s.a, Width::ACC);
         },
         Instruction::TYA => {
             s.a = if s.status.m { s.y & 0xFF } else { s.y };
-            s.set_zn(s.a, true);
+            s.set_zn(s.a, Width::ACC);
         },
         Instruction::TSX => {
             s.x = if s.status.x { s.sp & 0xFF } else { s.sp };
-            s.set_zn(s.x, false);
+            s.set_zn(s.x, Width::IDX);
         },
         Instruction::TXS => {
             s.sp = if s.emulation {
@@ -48,11 +48,11 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
         }
         Instruction::TCD => {
             s.dp = s.a;
-            s.set_zn(s.a, true);
+            s.set_zn(s.a, Width::ACC);
         },
         Instruction::TDC => {
             s.a = s.dp;
-            s.set_zn(s.a, true);
+            s.set_zn(s.a, Width::ACC);
         },
         Instruction::TCS => {
             s.sp = if s.emulation {
@@ -63,7 +63,7 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
         },
         Instruction::TSC => {
             s.a = s.sp;
-            s.set_zn(s.a, true);
+            s.set_zn(s.a, Width::ACC);
         },
         // --- Block Transfer ---
         Instruction::MVN => {
@@ -119,7 +119,7 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
             let sign_mask = 1 << (wid - 1);
             s.status.v = ((!((s.a as u32) ^ m) & ((s.a as u32) ^ full)) & sign_mask) != 0;
             s.a = result;
-            s.set_zn(s.a, true);
+            s.set_zn(s.a, Width::ACC);
         },
     
         Instruction::SBC => {
@@ -136,61 +136,61 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
             let r_sign = (result & sign_mask as u16) != 0;
             s.status.v = (a_sign != m_sign) && (a_sign != r_sign);
             s.a = result;
-            s.set_zn(s.a, true);
+            s.set_zn(s.a, Width::ACC);
         },
     
         Instruction::CMP => { 
             let m = s.resolve_value(&op, Width::ACC); 
             let r = s.a.wrapping_sub(m); 
             s.status.c = s.a >= m; 
-            s.set_zn(r, true); 
+            s.set_zn(r, Width::ACC); 
         },
         Instruction::CPX => { 
             let m = s.resolve_value(&op, Width::IDX); 
             let r = s.x.wrapping_sub(m); 
             s.status.c = s.x >= m; 
-            s.set_zn(r, false); 
+            s.set_zn(r, Width::IDX); 
         },
         Instruction::CPY => { 
             let m = s.resolve_value(&op, Width::IDX); 
             let r = s.y.wrapping_sub(m); 
             s.status.c = s.y >= m; 
-            s.set_zn(r, false); 
+            s.set_zn(r, Width::IDX); 
         },
     
         Instruction::INC => {
             let val = s.resolve_value(&op, Width::ACC).wrapping_add(1);
             s.resolve_store(&op, val, Width::ACC);
-            s.set_zn(val, true);
+            s.set_zn(val, Width::ACC);
         },
         Instruction::DEC => {
             let val = s.resolve_value(&op, Width::ACC).wrapping_sub(1);
             s.resolve_store(&op, val, Width::ACC);
-            s.set_zn(val, true);
+            s.set_zn(val, Width::ACC);
         },
     
         Instruction::INX => {
             s.x = s.x.wrapping_add(1);
-            s.set_zn(s.x, false);
+            s.set_zn(s.x, Width::IDX);
         },
         Instruction::DEX => {
             s.x = s.x.wrapping_sub(1);
-            s.set_zn(s.x, false);
+            s.set_zn(s.x, Width::IDX);
         },
     
         Instruction::INY => {
             s.y = s.y.wrapping_add(1);
-            s.set_zn(s.y, false);
+            s.set_zn(s.y, Width::IDX);
         },
         Instruction::DEY => {
             s.y = s.y.wrapping_sub(1);
-            s.set_zn(s.y, false);
+            s.set_zn(s.y, Width::IDX);
         },
     
         // --- Logical ---
-        Instruction::AND => { let val = s.resolve_value(&op, Width::ACC) & s.a; s.a = val; s.set_zn(val, true); },
-        Instruction::ORA => { let val = s.resolve_value(&op, Width::ACC) | s.a; s.a = val; s.set_zn(val, true); },
-        Instruction::EOR => { let val = s.resolve_value(&op, Width::ACC) ^ s.a; s.a = val; s.set_zn(val, true); },
+        Instruction::AND => { let val = s.resolve_value(&op, Width::ACC) & s.a; s.a = val; s.set_zn(val, Width::ACC); },
+        Instruction::ORA => { let val = s.resolve_value(&op, Width::ACC) | s.a; s.a = val; s.set_zn(val, Width::ACC); },
+        Instruction::EOR => { let val = s.resolve_value(&op, Width::ACC) ^ s.a; s.a = val; s.set_zn(val, Width::ACC); },
     
         // --- Shifts/Rotates ---
         Instruction::ASL => {
@@ -214,7 +214,7 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
                 val &= 0xFF;
             }
         
-            s.set_zn(val, wid == 8);
+            s.set_zn(val, Width::ACC);
         
             match op {
                 Operand::Address(a) => {
@@ -245,7 +245,7 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
                 val &= 0xFF;
             }
         
-            s.set_zn(val, wid == 8);
+            s.set_zn(val, Width::ACC);
             
             s.resolve_store(&op, val, Width::ACC);
         },
@@ -270,7 +270,7 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
                 val &= 0xFF;
             }
         
-            s.set_zn(val, wid == 8);
+            s.set_zn(val, Width::ACC);
         
             // Write back
             match op {
@@ -305,7 +305,7 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
             }
         
             // Set flags
-            s.set_zn(val, wid == 8);
+            s.set_zn(val, Width::ACC);
         
             match op {
                 Operand::Address(a) => {
@@ -323,17 +323,17 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
         Instruction::BIT => {
             let val = s.resolve_value(&op, Width::ACC);
             let r = s.a & val;
-            s.set_zn(r, true);
+            s.set_zn(r, Width::ACC);
             s.status.v = (val & (1 << 6)) != 0;
         },
         Instruction::TRB => {
             let val = s.resolve_value(&op, Width::ACC);
-            s.set_zn(s.a & val, true);
+            s.set_zn(s.a & val, Width::ACC);
             s.resolve_store(&op, val & !s.a, Width::ACC);
         },
         Instruction::TSB => {
             let val = s.resolve_value(&op, Width::ACC);
-            s.set_zn(s.a & val, true);
+            s.set_zn(s.a & val, Width::ACC);
             s.resolve_store(&op, val | s.a, Width::ACC);
         },
         // --- Mode Switching ---
@@ -359,7 +359,7 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
         Instruction::PHA => { if s.acc_size() == 1 { s.push8(s.a as u8) } else { s.push16(s.a); } },
         Instruction::PLA => { 
             s.a = if s.acc_size() == 1 { s.pop8() as u16 } else { s.pop16() }; 
-            s.set_zn(s.a, true); 
+            s.set_zn(s.a, Width::ACC); 
         },
         Instruction::PHP => s.push8(s.status.pack()),
         Instruction::PLP => { let v = s.pop8(); s.status.unpack(v); },

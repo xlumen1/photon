@@ -120,7 +120,7 @@ impl CPU {
                             self.read16(addr)
                         }
                     },
-                    // Width::U16 => { self.read16(addr) },
+                    Width::U16 => { self.read16(addr) },
                     Width::U8 => { self.read8(addr) as u16 },
                 }
             }
@@ -162,9 +162,9 @@ impl CPU {
                     Width::U8 => {
                         self.write8(*addr, value as u8);
                     },
-                    // Width::U16 => {
-                    //     self.write16(*addr, value);
-                    // },
+                    Width::U16 => {
+                        self.write16(*addr, value);
+                    },
                 }
             }
             Operand::None => {
@@ -350,8 +350,13 @@ impl CPU {
     /**
      * Set the zero and negative flags based on a value
      */
-    fn set_zn(&mut self, value: u16, is_acc: bool) {
-        let size = if is_acc { self.acc_size() } else { self.idx_size() } as usize;
+    fn set_zn(&mut self, value: u16, width: Width) {
+        let size = match width {
+            Width::U8  => 1,
+            Width::U16 => 2,
+            Width::ACC => self.acc_size(),
+            Width::IDX => self.idx_size(),
+        } as usize;
         
         let (mask, nmask) = if size == 1 {
             (0x00FFu16, 0x0080u16)

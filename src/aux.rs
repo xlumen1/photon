@@ -84,6 +84,6 @@ impl fmt::Display for Operand  {
 pub enum Width {
     ACC,
     IDX,
-    // U16,
+    U16,
     U8,
 }
