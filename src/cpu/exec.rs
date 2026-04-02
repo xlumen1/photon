@@ -48,7 +48,7 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
         }
         Instruction::TCD => {
             s.dp = s.a;
-            s.set_zn(s.dp, true);
+            s.set_zn(s.a, true);
         },
         Instruction::TDC => {
             s.a = s.dp;
