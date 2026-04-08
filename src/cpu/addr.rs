@@ -224,3 +224,9 @@ pub(super) fn addr_blk_mov(s: &mut CPU) -> Operand {
     let dst_bank = s.fetch8();
     Operand::Block { src_bank, dst_bank }
 }
+
+pub(super) fn addr_sig_byte(s: &mut CPU) -> Operand {
+    s.pc = s.pc.wrapping_add(1);
+    Operand::None
+}
+

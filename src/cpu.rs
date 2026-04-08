@@ -86,6 +86,8 @@ impl CPU {
     }
 
     pub fn reset(&mut self) {
+        self.set_emulation(true);
+
         self.ready_counter = 0; // Set ready
         self.pb = 0;
         self.pc = self.read16(0xFFFC);
@@ -329,9 +331,9 @@ impl CPU {
             AddressingMode::StackRelative     => addr::addr_sr(self),
             AddressingMode::StackRelativeY    => addr::addr_sr_ind_y(self),
             AddressingMode::BlockMove         => addr::addr_blk_mov(self),
+            AddressingMode::SigByte           => addr::addr_sig_byte(self),
         };
 
-        // /*
         #[cfg(debug_assertions)]
         println!("[photon] Executing {}({:02X}) at ${:06X} for {:04} cycles with mode {} => {}",
                 op.instr.as_str().red(),
@@ -341,7 +343,6 @@ impl CPU {
                 op.mode.as_str().blue(),
                 operand,
         );
-        // */
 
         exec::execute(self, op.instr, operand);
 

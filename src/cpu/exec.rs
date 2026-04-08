@@ -143,7 +143,8 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
             let m = s.resolve_value(&op, Width::ACC); 
             let r = s.a.wrapping_sub(m); 
             s.status.c = s.a >= m; 
-            s.set_zn(r, Width::ACC); 
+            s.set_zn(r, Width::ACC);
+            println!("[photon] CMP {:04X} - {:04X} = {:04X}", m, s.a, r);
         },
         Instruction::CPX => { 
             let m = s.resolve_value(&op, Width::IDX); 
@@ -387,9 +388,18 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
         },
         Instruction::RTS => { s.pc = s.pop16().wrapping_add(1); },
         Instruction::RTL => { s.pc = s.pop16().wrapping_add(1); s.pb = s.pop8(); },
-    
+        Instruction::RTI => { s.pc = s.pop16().wrapping_add(1); },
+
         // --- System ---
-        Instruction::BRK => { println!("[photon] Halting because of BRK"); s.ready_counter = -1; },
+        Instruction::BRK => {
+            let irqb = s.read16(0xFFFE);
+
+            s.push16(s.pc.wrapping_sub(1));
+            s.pc = irqb;
+            
+            println!("[photon] Jumping to IRQB at {:04X}", irqb);
+        },
+        Instruction::STP => { println!("[photon] Halting because of STP"); s.ready_counter = -1; },
         Instruction::NOP => {},
     
         // --- Status flags ---
@@ -414,7 +424,7 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
         
         // --- Special ---
         Instruction::WDM => { s.ready_counter = -1; println!("UNIMPLEMENTED INSTRUCTION REACHED, HALTING\nThis is likely NOT a bug with the emulator, the reached instruction is reserved by spec."); },
-        Instruction::ERR => { s.ready_counter = -1; println!("UNIMPLEMENTED INSTRUCTION REACHED, HALTING\nThis is likely a bug with the emulator, ERR is a virtual instruction reserved for missing instructions."); },
+        Instruction::HCF => { s.ready_counter = -1; println!("UNIMPLEMENTED INSTRUCTION REACHED, HALTING\nThis is likely a bug with the emulator, HCF is a virtual instruction reserved for missing instructions."); },
         _ => { s.ready_counter = -1; println!("ILLEGAL STATE REACHED, HALTING\nThis is most likely a bug with the emulator!"); },
     }
 }

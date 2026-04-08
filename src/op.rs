@@ -23,34 +23,36 @@ pub enum AddressingMode {
     StackRelative,
     StackRelativeY,
     BlockMove,
+    SigByte,
 }
 
 impl AddressingMode {
     pub fn as_str(self) -> &'static str {
         match self {
-            AddressingMode::Implied        => "Implied",
-            AddressingMode::ImmediateAcc   => "ImmediateAcc",
-            AddressingMode::ImmediateIdx   => "ImmediateIdx",
-            AddressingMode::ImmediateByte  => "ImmeditateByte",
-            AddressingMode::Absolute       => "Absolute",
-            AddressingMode::AbsoluteX      => "AbsoluteX",
-            AddressingMode::AbsoluteY      => "AbsoluteY",
-            AddressingMode::DirectPage     => "DirectPage",
-            AddressingMode::DirectPageX    => "DirectPageX",
-            AddressingMode::DirectPageY    => "DirectPageY",
-            AddressingMode::Indirect       => "Indirect",
-            AddressingMode::IndirectDP     => "IndirectDP",
-            AddressingMode::IndirectX      => "IndirectX",
-            AddressingMode::IndirectY      => "IndirectY",
-            AddressingMode::Relative       => "Relative",
-            AddressingMode::RelativeLong   => "RelativeLong",
-            AddressingMode::Long           => "Long",
-            AddressingMode::LongX          => "LongX",
-            AddressingMode::LongY          => "LongY",
-            AddressingMode::StackRelative  => "StackRelative",
-            AddressingMode::StackRelativeY => "StackRelativeY",
-            AddressingMode::BlockMove      => "BlockMove",
+            AddressingMode::Implied           => "Implied",
+            AddressingMode::ImmediateAcc      => "ImmediateAcc",
+            AddressingMode::ImmediateIdx      => "ImmediateIdx",
+            AddressingMode::ImmediateByte     => "ImmeditateByte",
+            AddressingMode::Absolute          => "Absolute",
+            AddressingMode::AbsoluteX         => "AbsoluteX",
+            AddressingMode::AbsoluteY         => "AbsoluteY",
+            AddressingMode::DirectPage        => "DirectPage",
+            AddressingMode::DirectPageX       => "DirectPageX",
+            AddressingMode::DirectPageY       => "DirectPageY",
+            AddressingMode::Indirect          => "Indirect",
+            AddressingMode::IndirectDP        => "IndirectDP",
+            AddressingMode::IndirectX         => "IndirectX",
+            AddressingMode::IndirectY         => "IndirectY",
+            AddressingMode::Relative          => "Relative",
+            AddressingMode::RelativeLong      => "RelativeLong",
+            AddressingMode::Long              => "Long",
+            AddressingMode::LongX             => "LongX",
+            AddressingMode::LongY             => "LongY",
+            AddressingMode::StackRelative     => "StackRelative",
+            AddressingMode::StackRelativeY    => "StackRelativeY",
+            AddressingMode::BlockMove         => "BlockMove",
             AddressingMode::IndirectAbsoluteX => "IndirectAbsoluteX",
+            AddressingMode::SigByte           => "SigByte",
         }
     }
 }
@@ -147,7 +149,7 @@ pub enum Instruction {
     WDM,
     XBA,
     XCE,
-    ERR // Reserved for errors
+    HCF // Reserved for errors
 }
 
 
@@ -244,7 +246,7 @@ impl Instruction {
             Instruction::WDM => "WDM",
             Instruction::XBA => "XBA",
             Instruction::XCE => "XCE",
-            Instruction::ERR => "ERR[Virtual]"
+            Instruction::HCF => "HCF[Virtual]"
         }
     }
 }
@@ -258,7 +260,7 @@ pub struct Opcode {
 
 pub const OPCODES: [Opcode; 256] = {
     let mut table = [Opcode {
-        instr:  Instruction::ERR,
+        instr:  Instruction::HCF,
         mode:   AddressingMode::Implied,
         cycles: 1
     }; 256];
@@ -333,8 +335,9 @@ pub const OPCODES: [Opcode; 256] = {
     table[0x54] = Opcode { instr: Instruction::MVN, mode: AddressingMode::BlockMove, cycles: 0 }; // Cycles covered in code
     table[0x44] = Opcode { instr: Instruction::MVP, mode: AddressingMode::BlockMove, cycles: 0 }; // Cycles covered in code
 
-    // Break
-    table[0x00] = Opcode { instr: Instruction::BRK, mode: AddressingMode::Implied, cycles: 7 };
+    // Interrupts
+    table[0x00] = Opcode { instr: Instruction::BRK, mode: AddressingMode::SigByte, cycles: 7 };
+    table[0xDB] = Opcode { instr: Instruction::STP, mode: AddressingMode::Implied, cycles: 3 };
 
     // NOP
     table[0xEA] = Opcode { instr: Instruction::NOP, mode: AddressingMode::Implied, cycles: 2 };
