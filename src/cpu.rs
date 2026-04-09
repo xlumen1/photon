@@ -1,6 +1,8 @@
 mod exec;
 mod addr;
 use crate::{aux::{Operand, Status, Width}, op::{AddressingMode, OPCODES}};
+
+#[cfg(debug_assertions)]
 use colored::Colorize; 
 
 /*
@@ -301,6 +303,7 @@ impl CPU {
         }
 
         let opcode = self.fetch8();
+        #[cfg(debug_assertions)]
         let source = self.pc as u32 - 1 + ((self.pb as u32) << 16);
         let op = &OPCODES[opcode as usize];
 
