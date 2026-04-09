@@ -344,6 +344,14 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
         Instruction::SEP => {
             let val = s.resolve_value(&op, Width::U8) as u8;
             s.status.set_bits(val);
+
+            if val & 0x10 != 0 {
+                s.x &= 0x00FF as u16;
+                s.y &= 0x00FF as u16;
+            }
+            if val & 0x20 != 0 {
+                s.a &= 0x0FF as u16;
+            }
         },
     
         // --- Branches ---
