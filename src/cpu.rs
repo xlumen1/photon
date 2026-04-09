@@ -35,9 +35,8 @@ pub struct CPU {
     pub pc: u16,
     pub pb: u8,
 
-    // Internal
-    status: Status,
-    emulation: bool,
+    pub status: Status,
+    pub emulation: bool,
 
     // Helpers
     ready_counter: i16, // Cycles until ready for next instruction

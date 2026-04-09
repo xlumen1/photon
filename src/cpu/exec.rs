@@ -144,7 +144,6 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
             let r = s.a.wrapping_sub(m); 
             s.status.c = s.a >= m; 
             s.set_zn(r, Width::ACC);
-            println!("[photon] CMP {:04X} - {:04X} = {:04X}", m, s.a, r);
         },
         Instruction::CPX => { 
             let m = s.resolve_value(&op, Width::IDX); 
@@ -388,13 +387,23 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
         },
         Instruction::RTS => { s.pc = s.pop16().wrapping_add(1); },
         Instruction::RTL => { s.pc = s.pop16().wrapping_add(1); s.pb = s.pop8(); },
-        Instruction::RTI => { s.pc = s.pop16().wrapping_add(1); },
+        Instruction::RTI => {
+            let p = s.pop8();
+            let pcret = s.pop16();
+
+            s.status.unpack(p);
+            s.pc = pcret.wrapping_add(1);
+        },
 
         // --- System ---
         Instruction::BRK => {
             let irqb = s.read16(0xFFFE);
+            
+            let pcret = s.pc.wrapping_sub(1);
+            let p = s.status.pack();
 
-            s.push16(s.pc.wrapping_sub(1));
+            s.push16(pcret);
+            s.push8(p);
             s.pc = irqb;
             
             println!("[photon] Jumping to IRQB at {:04X}", irqb);
