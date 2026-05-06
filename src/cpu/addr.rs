@@ -38,6 +38,12 @@ pub(super) fn addr_imm_byte(s: &mut CPU) -> Operand {
     Operand::Immediate(value as u16)
 }
 
+pub(super) fn addr_imm_word(s: &mut CPU) -> Operand {
+    s.inst_cycles(1);
+    let value = s.fetch16();
+    Operand::Immediate(value as u16)
+}
+
 // Absolute Addressing
 
 pub(super) fn addr_abs(s: &mut CPU) -> Operand {

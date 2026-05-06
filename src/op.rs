@@ -4,6 +4,7 @@ pub enum AddressingMode {
     ImmediateAcc,
     ImmediateIdx,
     ImmediateByte,
+    ImmediateWord,
     Absolute,
     AbsoluteX,
     AbsoluteY,
@@ -33,6 +34,7 @@ impl AddressingMode {
             AddressingMode::ImmediateAcc      => "ImmediateAcc",
             AddressingMode::ImmediateIdx      => "ImmediateIdx",
             AddressingMode::ImmediateByte     => "ImmeditateByte",
+            AddressingMode::ImmediateWord     => "ImmediateWord",
             AddressingMode::Absolute          => "Absolute",
             AddressingMode::AbsoluteX         => "AbsoluteX",
             AddressingMode::AbsoluteY         => "AbsoluteY",
@@ -336,7 +338,8 @@ pub const OPCODES: [Opcode; 256] = {
     table[0x44] = Opcode { instr: Instruction::MVP, mode: AddressingMode::BlockMove, cycles: 0 }; // Cycles covered in code
 
     // Interrupts
-    table[0x00] = Opcode { instr: Instruction::BRK, mode: AddressingMode::SigByte, cycles: 7 };
+    table[0x00] = Opcode { instr: Instruction::BRK, mode: AddressingMode::Implied, cycles: 7 };
+    table[0x40] = Opcode { instr: Instruction::RTI, mode: AddressingMode::Implied, cycles: 7 };
     table[0xDB] = Opcode { instr: Instruction::STP, mode: AddressingMode::Implied, cycles: 3 };
 
     // NOP
@@ -500,6 +503,7 @@ pub const OPCODES: [Opcode; 256] = {
     table[0x4B] = Opcode { instr: Instruction::PHK, mode: AddressingMode::Implied, cycles: 3 };
     table[0xAB] = Opcode { instr: Instruction::PLB, mode: AddressingMode::Implied, cycles: 4 };
     table[0x8B] = Opcode { instr: Instruction::PHB, mode: AddressingMode::Implied, cycles: 3 };
+    table[0xF4] = Opcode { instr: Instruction::PEA, mode: AddressingMode::ImmediateWord, cycles: 5 };
 
     // Subroutine control
     table[0x4C] = Opcode { instr: Instruction::JMP, mode: AddressingMode::Absolute, cycles: 3 };

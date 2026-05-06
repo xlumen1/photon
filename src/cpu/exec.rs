@@ -374,7 +374,11 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
         Instruction::PHK => { s.push8(s.pb); },
         Instruction::PLB => { s.pb = s.pop8(); },
         Instruction::PHB => { s.push8(s.db); },
-    
+        Instruction::PEA => {
+            let addr = s.resolve_value(&op, Width::U16);
+            s.push16(addr);
+        },
+
         // --- Subroutines ---
         Instruction::JSR => { 
             let addr = match op { Operand::Address(a) => a, _ => panic!("JSR expects address operand") }; 

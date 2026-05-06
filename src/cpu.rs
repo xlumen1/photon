@@ -314,6 +314,7 @@ impl CPU {
             AddressingMode::ImmediateAcc      => addr::addr_imm_acc(self),
             AddressingMode::ImmediateIdx      => addr::addr_imm_idx(self),
             AddressingMode::ImmediateByte     => addr::addr_imm_byte(self),
+            AddressingMode::ImmediateWord     => addr::addr_imm_word(self),
             AddressingMode::Absolute          => addr::addr_abs(self),
             AddressingMode::AbsoluteX         => addr::addr_abs_x(self),
             AddressingMode::AbsoluteY         => addr::addr_abs_y(self),
