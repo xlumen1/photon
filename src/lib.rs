@@ -6,6 +6,24 @@ use crate::cpu::CPU;
 pub type MemReadCb = extern "C" fn(addr: u32) -> u8;
 pub type MemWriteCb = extern "C" fn(addr: u32, val: u8);
 
+#[repr(C)]
+pub struct State {
+    pub x: u16,
+    pub y: u16,
+    pub a: u16,
+
+    pub dp: u16,
+    pub db: u8,
+    
+    pub sp: u16,
+
+    pub pc: u16,
+    pub pb: u8,
+
+    pub status: u8,
+    pub emulation: bool,
+}
+
 #[unsafe(no_mangle)]
 pub extern "C" fn create_cpu() -> *mut CPU {
     let cpu: Box<CPU> = Box::new(CPU::new());
@@ -39,24 +57,48 @@ pub extern "C" fn step(cpu: *mut CPU) {
 
 
 #[unsafe(no_mangle)]
-pub extern "C" fn get_pc_full(cpu: *const CPU) -> u32 {
-    if cpu.is_null() {
-        return 0;
-    }
+pub extern "C" fn export_state(cpu: *const CPU) -> State {
+    assert!(!cpu.is_null(), "cpu pointer is null");
+    let cpu_ref = unsafe { &*cpu };
 
-    let cpu_ref: &CPU = unsafe { &*cpu };
-    ((cpu_ref.pb as u32) << 16) | cpu_ref.pc as u32
+    let state: State = State {
+        x: cpu_ref.x,
+        y: cpu_ref.y,
+        a: cpu_ref.a,
+
+        dp: cpu_ref.dp,
+        db: cpu_ref.db,
+
+        sp: cpu_ref.sp,
+
+        pc: cpu_ref.pc,
+        pb: cpu_ref.pb,
+
+        status: cpu_ref.status.pack(),
+        emulation: cpu_ref.emulation,
+    };
+    state
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn set_pc_full(cpu: *mut CPU, pos: u32) {
-    if cpu.is_null() {
-        return;
-    }
-
+pub extern "C" fn import_state(cpu: *mut CPU, state: State) {
+    assert!(!cpu.is_null(), "cpu pointer is null");
     let cpu_ref = unsafe { &mut *cpu };
-    cpu_ref.pc = (pos & 0x0000_FFFF) as u16;
-    cpu_ref.pb = ((pos >> 16) & 0xFF) as u8;
+
+    cpu_ref.x = state.x;
+    cpu_ref.y = state.y;
+    cpu_ref.a = state.a;
+
+    cpu_ref.dp = state.dp;
+    cpu_ref.db = state.db;
+
+    cpu_ref.sp = state.sp;
+
+    cpu_ref.pc = state.pc;
+    cpu_ref.pb = state.pb;
+
+    cpu_ref.status.unpack(state.status);
+    cpu_ref.emulation = state.emulation;
 }
 
 #[unsafe(no_mangle)]
