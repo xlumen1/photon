@@ -49,12 +49,17 @@ pub extern "C" fn set_callbacks(cpu: *mut CPU, read_cb: MemReadCb, write_cb: Mem
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn step(cpu: *mut CPU) {
+pub extern "C" fn cycle(cpu: *mut CPU) {
     assert!(!cpu.is_null(), "cpu pointer is null");
     let cpu_ref: &mut CPU = unsafe { &mut *cpu };
-    cpu_ref.step();
+    cpu_ref.cycle();
 }
-
+#[unsafe(no_mangle)]
+pub extern "C" fn step(cpu: *mut CPU) -> u64 {
+    assert!(!cpu.is_null(), "cpu pointer is null");
+    let cpu_ref: &mut CPU = unsafe { &mut *cpu };
+    cpu_ref.step()
+}
 
 #[unsafe(no_mangle)]
 pub extern "C" fn export_state(cpu: *const CPU) -> State {

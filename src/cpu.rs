@@ -288,12 +288,28 @@ impl CPU {
         }
     }
 
-
+    /*
+     * Step through an instruction
+     */
+    pub fn step(&mut self) -> u64 {
+        if self.ready_counter < 0 {
+            return 0;
+        }
+        let mut cycles: u64 = 0;
+        loop {
+            self.cycle();
+            cycles += 1;
+            if self.ready_counter <= 0 {
+                break;
+            }
+        }
+        cycles
+    }
 
     /**
-     * Execute a cpu step, already manages cycles
+     * Execute a cpu cycle
      */
-    pub fn step(&mut self) {
+    pub fn cycle(&mut self) {
         if self.ready_counter > 0 {
             self.ready_counter -= 1;
             return;
