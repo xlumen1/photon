@@ -151,12 +151,16 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
             let r = s.a.wrapping_sub(m); 
             s.status.c = s.a >= m; 
             s.set_zn(r, Width::ACC);
+            #[cfg(debug_assertions)]
+            println!("[photon] Comparing {} - {} = {}", s.a, m, r);
         },
         Instruction::CPX => { 
             let m = s.resolve_value(&op, Width::IDX); 
             let r = s.x.wrapping_sub(m); 
             s.status.c = s.x >= m; 
             s.set_zn(r, Width::IDX); 
+            #[cfg(debug_assertions)]
+            println!("[photon] Comparing {} - {} = {}", s.x, m, r);
         },
         Instruction::CPY => { 
             let m = s.resolve_value(&op, Width::IDX); 
@@ -180,7 +184,7 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
             if s.idx_size() == 1 {
                 s.x = (s.x as u8).wrapping_add(1) as u16;
             } else {
-            s.x = s.x.wrapping_add(1);
+                s.x = s.x.wrapping_add(1);
             }
             s.set_zn(s.x, Width::IDX);
         },
@@ -188,7 +192,7 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
             if s.idx_size() == 1 {
                 s.x = (s.x as u8).wrapping_sub(1) as u16;
             } else {
-            s.x = s.x.wrapping_sub(1);
+                s.x = s.x.wrapping_sub(1);
             }
             s.set_zn(s.x, Width::IDX);
         },
@@ -197,7 +201,7 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
             if s.idx_size() == 1 {
                 s.y = (s.y as u8).wrapping_add(1) as u16;
             } else {
-            s.y = s.y.wrapping_add(1);
+                s.y = s.y.wrapping_add(1);
             }
             s.set_zn(s.y, Width::IDX);
         },
@@ -205,7 +209,7 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
             if s.idx_size() == 1 {
                 s.y = (s.y as u8).wrapping_sub(1) as u16;
             } else {
-            s.y = s.y.wrapping_sub(1);
+                s.y = s.y.wrapping_sub(1);
             }
             s.set_zn(s.y, Width::IDX);
         },
