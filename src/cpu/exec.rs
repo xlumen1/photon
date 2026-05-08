@@ -177,20 +177,36 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
         },
     
         Instruction::INX => {
+            if s.idx_size() == 1 {
+                s.x = (s.x as u8).wrapping_add(1) as u16;
+            } else {
             s.x = s.x.wrapping_add(1);
+            }
             s.set_zn(s.x, Width::IDX);
         },
         Instruction::DEX => {
+            if s.idx_size() == 1 {
+                s.x = (s.x as u8).wrapping_sub(1) as u16;
+            } else {
             s.x = s.x.wrapping_sub(1);
+            }
             s.set_zn(s.x, Width::IDX);
         },
     
         Instruction::INY => {
+            if s.idx_size() == 1 {
+                s.y = (s.y as u8).wrapping_add(1) as u16;
+            } else {
             s.y = s.y.wrapping_add(1);
+            }
             s.set_zn(s.y, Width::IDX);
         },
         Instruction::DEY => {
+            if s.idx_size() == 1 {
+                s.y = (s.y as u8).wrapping_sub(1) as u16;
+            } else {
             s.y = s.y.wrapping_sub(1);
+            }
             s.set_zn(s.y, Width::IDX);
         },
     
