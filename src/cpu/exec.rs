@@ -445,7 +445,7 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
         
         // --- Special ---
         Instruction::WDM => { s.ready_counter = -1; println!("UNIMPLEMENTED INSTRUCTION REACHED, HALTING\nThis is likely NOT a bug with the emulator, the reached instruction is reserved by spec."); },
-        Instruction::HCF => { s.ready_counter = -1; println!("UNIMPLEMENTED INSTRUCTION REACHED, HALTING\nThis is likely a bug with the emulator, HCF is a virtual instruction reserved for missing instructions."); },
+        Instruction::HCF(op) => { s.ready_counter = -1; println!("UNIMPLEMENTED INSTRUCTION REACHED, HALTING\nThis is likely a bug with the emulator, the executed instruction had opcode {:02X}", op); },
         _ => { s.ready_counter = -1; println!("ILLEGAL STATE REACHED, HALTING\nThis is most likely a bug with the emulator!"); },
     }
 }

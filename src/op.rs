@@ -151,7 +151,7 @@ pub enum Instruction {
     WDM,
     XBA,
     XCE,
-    HCF // Reserved for errors
+    HCF(u8) // Reserved for errors
 }
 
 
@@ -248,7 +248,7 @@ impl Instruction {
             Instruction::WDM => "WDM",
             Instruction::XBA => "XBA",
             Instruction::XCE => "XCE",
-            Instruction::HCF => "HCF[Virtual]"
+            Instruction::HCF(_) => "HCF[Virtual]"
         }
     }
 }
@@ -262,10 +262,16 @@ pub struct Opcode {
 
 pub const OPCODES: [Opcode; 256] = {
     let mut table = [Opcode {
-        instr:  Instruction::HCF,
+        instr:  Instruction::HCF(0),
         mode:   AddressingMode::Implied,
         cycles: 1
     }; 256];
+
+    let mut index = 0;
+    while index < 256 {
+        table[index] = Opcode { instr: Instruction::HCF(index as u8), mode: AddressingMode::Implied, cycles: 1 };
+        index += 1;
+    }
     
     // LDA - Load Accumulator
     table[0xA9] = Opcode { instr: Instruction::LDA, mode: AddressingMode::ImmediateAcc, cycles: 2 };
