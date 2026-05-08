@@ -384,6 +384,8 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
         Instruction::BCC => s.branch(op, !s.status.c),
         Instruction::BMI => s.branch(op, s.status.n),
         Instruction::BPL => s.branch(op, !s.status.n),
+        Instruction::BVS => s.branch(op, s.status.v),
+        Instruction::BVC => s.branch(op, !s.status.v),
         Instruction::BRA => s.branch(op, true),
     
         // --- Stack ops ---
