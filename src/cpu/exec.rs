@@ -43,9 +43,16 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
                 s.x
             };
         },
+        Instruction::TXY => {
+            s.y = s.x;
+        },
+        Instruction::TYX => {
+            s.x = s.y;
+        }
+
         Instruction::XBA => {
             s.a = (s.a << 8) | (s.a >> 8);
-        }
+        },
         Instruction::TCD => {
             s.dp = s.a;
             s.set_zn(s.a, Width::ACC);

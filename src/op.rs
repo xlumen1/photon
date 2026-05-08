@@ -137,6 +137,8 @@ pub enum Instruction {
     STZ,
     TAX,
     TAY,
+    TXY,
+    TYX,
     TCD,
     TCS,
     TDC,
@@ -234,6 +236,8 @@ impl Instruction {
             Instruction::STZ => "STZ",
             Instruction::TAX => "TAX",
             Instruction::TAY => "TAY",
+            Instruction::TXY => "TXY",
+            Instruction::TYX => "TYX",
             Instruction::TCD => "TCD",
             Instruction::TCS => "TCS",
             Instruction::TDC => "TDC",
@@ -330,6 +334,8 @@ pub const OPCODES: [Opcode; 256] = {
     table[0xA8] = Opcode { instr: Instruction::TAY, mode: AddressingMode::Implied, cycles: 2 };
     table[0x8A] = Opcode { instr: Instruction::TXA, mode: AddressingMode::Implied, cycles: 2 };
     table[0x98] = Opcode { instr: Instruction::TYA, mode: AddressingMode::Implied, cycles: 2 };
+    table[0x9B] = Opcode { instr: Instruction::TXY, mode: AddressingMode::Implied, cycles: 2 };
+    table[0xBB] = Opcode { instr: Instruction::TYX, mode: AddressingMode::Implied, cycles: 2 };
     table[0xBA] = Opcode { instr: Instruction::TSX, mode: AddressingMode::Implied, cycles: 2 };
     table[0x9A] = Opcode { instr: Instruction::TXS, mode: AddressingMode::Implied, cycles: 2 };
 
