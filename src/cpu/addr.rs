@@ -59,6 +59,12 @@ pub(super) fn addr_abs_y(s: &mut CPU) -> Operand {
     Operand::Address(((s.db as u32) << 16) | addr as u32)
 }
 
+pub(super) fn addr_abs_long(s: &mut CPU) -> Operand {
+    let base = s.fetch16();
+    let bank = s.fetch8();
+    Operand::Address(((bank as u32) << 16) | base as u32)
+}
+
 // Direct Page Addressing
 
 pub(super) fn addr_dp(s: &mut CPU) -> Operand {

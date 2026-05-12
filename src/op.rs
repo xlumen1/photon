@@ -8,6 +8,7 @@ pub enum AddressingMode {
     Absolute,
     AbsoluteX,
     AbsoluteY,
+    AbsoluteLong,
     DirectPage,
     DirectPageX,
     DirectPageY,

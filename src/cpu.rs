@@ -334,6 +334,7 @@ impl CPU {
             AddressingMode::Absolute          => addr::addr_abs(self),
             AddressingMode::AbsoluteX         => addr::addr_abs_x(self),
             AddressingMode::AbsoluteY         => addr::addr_abs_y(self),
+            AddressingMode::AbsoluteLong      => addr::addr_abs_long(self),
             AddressingMode::DirectPage        => addr::addr_dp(self),
             AddressingMode::DirectPageX       => addr::addr_dp_x(self),
             AddressingMode::DirectPageY       => addr::addr_dp_y(self),
