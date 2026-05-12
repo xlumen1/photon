@@ -65,6 +65,20 @@ pub(super) fn addr_abs_long(s: &mut CPU) -> Operand {
     Operand::Address(((bank as u32) << 16) | base as u32)
 }
 
+pub(super) fn addr_abs_long_x(s: &mut CPU) -> Operand {
+    let base = s.fetch16();
+    let bank = s.fetch8();
+    let addr = ((bank as u32) << 16) | base as u32;
+    Operand::Address(addr.wrapping_add(s.x as u32))
+}
+
+pub(super) fn addr_abs_long_y(s: &mut CPU) -> Operand {
+    let base = s.fetch16();
+    let bank = s.fetch8();
+    let addr = ((bank as u32) << 16) | base as u32;
+    Operand::Address(addr.wrapping_add(s.x as u32))
+}
+
 // Direct Page Addressing
 
 pub(super) fn addr_dp(s: &mut CPU) -> Operand {
@@ -83,29 +97,6 @@ pub(super) fn addr_dp_y(s: &mut CPU) -> Operand {
     let offset = s.fetch8();
     let addr = s.dp.wrapping_add(offset as u16).wrapping_add(s.y) as u32;
     Operand::Address(addr)
-}
-
-// Long Addressing
-
-pub(super) fn addr_long(s: &mut CPU) -> Operand {
-    let lo = s.fetch8() as u32;
-    let md = s.fetch8() as u32;
-    let hi = s.fetch8() as u32;
-    Operand::Address((hi << 16) | (md << 8) | lo)
-}
-
-pub(super) fn addr_long_x(s: &mut CPU) -> Operand {
-    let lo = s.fetch8() as u32;
-    let md = s.fetch8() as u32;
-    let hi = s.fetch8() as u32;
-    Operand::Address(((hi << 16) | (md << 8) | lo).wrapping_add(s.x as u32))
-}
-
-pub(super) fn addr_long_y(s: &mut CPU) -> Operand {
-    let lo = s.fetch8() as u32;
-    let md = s.fetch8() as u32;
-    let hi = s.fetch8() as u32;
-    Operand::Address(((hi << 16) | (md << 8) | lo).wrapping_add(s.y as u32))
 }
 
 // Indirect Addressing
