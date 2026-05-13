@@ -1,60 +1,64 @@
 #[derive(Copy, Clone)]
 pub enum AddressingMode {
-    Implied,
-    ImmediateAcc,
-    ImmediateIdx,
-    ImmediateByte,
-    ImmediateWord,
-    Absolute,
-    AbsoluteX,
-    AbsoluteY,
-    AbsoluteLong,
-    AbsoluteLongX,
-    AbsoluteLongY,
-    DirectPage,
-    DirectPageX,
-    DirectPageY,
-    Indirect, 
-    IndirectDP,
-    IndirectX,
-    IndirectY,
-    IndirectAbsoluteX,
-    Relative,
-    RelativeLong,
-    StackRelative,
-    StackRelativeY,
-    BlockMove,
-    SigByte,
+//  NAME                    SHORTHAND(S)
+    Absolute,            // a
+    AbsoluteIndirectX,   // (a,x)
+    AbsoluteX,           // a,x
+    AbsoluteY,           // a,y
+    AbsoluteIndirect,    // (a)
+    AbsoluteLongX,       // al,x
+    AbsoluteLong,        // al
+    BlockMove,           // xyc
+    DirectIndirectX,     // (d,x)
+    DirectX,             // d,x
+    DirectY,             // d,y
+    DirectIndirectY,     // (d),y
+    DirectIndirectLongY, // [d],y
+    DirectIndirectLong,  // [d]
+    DirectIndirect,      // (d)
+    Direct,              // d
+    ImmediateAcc,        // #
+    ImmediateIdx,        // #
+    ImmediateByte,       // #
+    ImmediateWord,       // #
+    Implied,             // i
+    RelativeLong,        // rl
+    Relative,            // r
+    Stack,               // s
+    StackRelative,       // d,s
+    StackRelativeY,      // (d,s),y
 }
 
 impl AddressingMode {
+    #[cfg(debug_assertions)]
     pub fn as_str(self) -> &'static str {
         match self {
-            AddressingMode::Implied           => "Implied",
-            AddressingMode::ImmediateAcc      => "ImmediateAcc",
-            AddressingMode::ImmediateIdx      => "ImmediateIdx",
-            AddressingMode::ImmediateByte     => "ImmeditateByte",
-            AddressingMode::ImmediateWord     => "ImmediateWord",
-            AddressingMode::Absolute          => "Absolute",
-            AddressingMode::AbsoluteX         => "AbsoluteX",
-            AddressingMode::AbsoluteY         => "AbsoluteY",
-            AddressingMode::DirectPage        => "DirectPage",
-            AddressingMode::DirectPageX       => "DirectPageX",
-            AddressingMode::DirectPageY       => "DirectPageY",
-            AddressingMode::Indirect          => "Indirect",
-            AddressingMode::IndirectDP        => "IndirectDP",
-            AddressingMode::IndirectX         => "IndirectX",
-            AddressingMode::IndirectY         => "IndirectY",
-            AddressingMode::Relative          => "Relative",
-            AddressingMode::RelativeLong      => "RelativeLong",
-            AddressingMode::Long              => "Long",
-            AddressingMode::LongX             => "LongX",
-            AddressingMode::LongY             => "LongY",
-            AddressingMode::StackRelative     => "StackRelative",
-            AddressingMode::StackRelativeY    => "StackRelativeY",
-            AddressingMode::BlockMove         => "BlockMove",
-            AddressingMode::IndirectAbsoluteX => "IndirectAbsoluteX",
-            AddressingMode::SigByte           => "SigByte",
+            AddressingMode::Absolute            => "Absolute",
+            AddressingMode::AbsoluteIndirectX   => "AbsoluteIndirectX",
+            AddressingMode::AbsoluteX           => "AbsoluteX",
+            AddressingMode::AbsoluteY           => "AbsoluteY",
+            AddressingMode::AbsoluteIndirect    => "AbsoluteIndirect",
+            AddressingMode::AbsoluteLongX       => "AbsoluteLongX",
+            AddressingMode::AbsoluteLong        => "AbsoluteLong",
+            AddressingMode::BlockMove           => "BlockMove",
+            AddressingMode::DirectIndirectX     => "DirectIndirectX",
+            AddressingMode::DirectX             => "DirectX",
+            AddressingMode::DirectY             => "DirectY",
+            AddressingMode::DirectIndirectY     => "DirectIndirectY",
+            AddressingMode::DirectIndirectLongY => "DirectIndirectLongY",
+            AddressingMode::DirectIndirectLong  => "DirectIndirectLong",
+            AddressingMode::DirectIndirect      => "DirectIndirect",
+            AddressingMode::Direct              => "Direct",
+            AddressingMode::ImmediateAcc        => "ImmediateAcc",
+            AddressingMode::ImmediateIdx        => "ImmediateIdx",
+            AddressingMode::ImmediateByte       => "ImmediateByte",
+            AddressingMode::ImmediateWord       => "ImmediateWord",
+            AddressingMode::Implied             => "Implied",
+            AddressingMode::Stack               => "Stack",
+            AddressingMode::RelativeLong        => "RelativeLong",
+            AddressingMode::Relative            => "Relative",
+            AddressingMode::StackRelative       => "StackRelative",
+            AddressingMode::StackRelativeY      => "StackRelativeY",
         }
     }
 }
@@ -257,6 +261,31 @@ impl Instruction {
     }
 }
 
+macro_rules! generate_table {
+    (
+        $(
+            $code:expr => ($instr:ident, $mode:ident, $cycles:expr)
+        ),* $(,)?
+    ) => {{
+        let mut table = [Opcode { instr: Instruction::HCF(0), mode: AddressingMode::Implied, cycles: 1 }; 256];
+        let mut index = 0;
+        while index < 256 {
+            table[index] = Opcode { instr: Instruction::HCF(index as u8), mode: AddressingMode::Implied, cycles: 1 };
+            index += 1;
+        }
+
+        $(
+            table[$code] = Opcode {
+                instr: Instruction::$instr,
+                mode: AddressingMode::$mode,
+                cycles: $cycles,
+            };
+        )*
+
+        table
+    }};
+}
+
 #[derive(Copy, Clone)]
 pub struct Opcode {
     pub instr: Instruction,
@@ -264,276 +293,262 @@ pub struct Opcode {
     pub cycles: u8
 }
 
-pub const OPCODES: [Opcode; 256] = {
-    let mut table = [Opcode {
-        instr:  Instruction::HCF(0),
-        mode:   AddressingMode::Implied,
-        cycles: 1
-    }; 256];
-
-    let mut index = 0;
-    while index < 256 {
-        table[index] = Opcode { instr: Instruction::HCF(index as u8), mode: AddressingMode::Implied, cycles: 1 };
-        index += 1;
-    }
-    
-    // LDA - Load Accumulator
-    table[0xA9] = Opcode { instr: Instruction::LDA, mode: AddressingMode::ImmediateAcc, cycles: 2 };
-    table[0xA5] = Opcode { instr: Instruction::LDA, mode: AddressingMode::DirectPage, cycles: 3 };
-    table[0xB5] = Opcode { instr: Instruction::LDA, mode: AddressingMode::DirectPageX, cycles: 4 };
-    table[0xAD] = Opcode { instr: Instruction::LDA, mode: AddressingMode::Absolute, cycles: 4 };
-    table[0xBD] = Opcode { instr: Instruction::LDA, mode: AddressingMode::AbsoluteX, cycles: 4 }; // +1 if page crossed
-    table[0xB9] = Opcode { instr: Instruction::LDA, mode: AddressingMode::AbsoluteY, cycles: 4 }; // +1 if page crossed
-    table[0xA1] = Opcode { instr: Instruction::LDA, mode: AddressingMode::IndirectX, cycles: 6 };
-    table[0xB1] = Opcode { instr: Instruction::LDA, mode: AddressingMode::IndirectY, cycles: 5 }; // +1 if page crossed
-    table[0xB2] = Opcode { instr: Instruction::LDA, mode: AddressingMode::IndirectDP, cycles: 5 }; // +1 if paged crossed
-    table[0xA3] = Opcode { instr: Instruction::LDA, mode: AddressingMode::StackRelative, cycles: 4 };
-
-    // LDX – Load X register
-    table[0xA2] = Opcode { instr: Instruction::LDX, mode: AddressingMode::ImmediateIdx, cycles: 2 };
-    table[0xA6] = Opcode { instr: Instruction::LDX, mode: AddressingMode::DirectPage, cycles: 3 };
-    table[0xB6] = Opcode { instr: Instruction::LDX, mode: AddressingMode::DirectPageY, cycles: 4 };
-    table[0xAE] = Opcode { instr: Instruction::LDX, mode: AddressingMode::Absolute, cycles: 4 };
-    table[0xBE] = Opcode { instr: Instruction::LDX, mode: AddressingMode::AbsoluteY, cycles: 4 }; // +1 if page crossed
-
-    // LDY – Load Y register
-    table[0xA0] = Opcode { instr: Instruction::LDY, mode: AddressingMode::ImmediateIdx, cycles: 2 };
-    table[0xA4] = Opcode { instr: Instruction::LDY, mode: AddressingMode::DirectPage, cycles: 3 };
-    table[0xB4] = Opcode { instr: Instruction::LDY, mode: AddressingMode::DirectPageX, cycles: 4 };
-    table[0xAC] = Opcode { instr: Instruction::LDY, mode: AddressingMode::Absolute, cycles: 4 };
-    table[0xBC] = Opcode { instr: Instruction::LDY, mode: AddressingMode::AbsoluteX, cycles: 4 }; // +1 if page crossed
-
-    // STA – Store Accumulator
-    table[0x85] = Opcode { instr: Instruction::STA, mode: AddressingMode::DirectPage, cycles: 3 };
-    table[0x95] = Opcode { instr: Instruction::STA, mode: AddressingMode::DirectPageX, cycles: 4 };
-    table[0x8D] = Opcode { instr: Instruction::STA, mode: AddressingMode::Absolute, cycles: 4 };
-    table[0x9D] = Opcode { instr: Instruction::STA, mode: AddressingMode::AbsoluteX, cycles: 5 };
-    table[0x99] = Opcode { instr: Instruction::STA, mode: AddressingMode::AbsoluteY, cycles: 5 };
-    table[0x81] = Opcode { instr: Instruction::STA, mode: AddressingMode::IndirectX, cycles: 6 };
-    table[0x91] = Opcode { instr: Instruction::STA, mode: AddressingMode::IndirectY, cycles: 6 };
-    table[0x9F] = Opcode { instr: Instruction::STA, mode: AddressingMode::LongX, cycles: 1 };
-
-    // STX - Store X register
-    table[0x86] = Opcode { instr: Instruction::STX, mode: AddressingMode::DirectPage, cycles: 3 };
-    table[0x96] = Opcode { instr: Instruction::STX, mode: AddressingMode::DirectPageY, cycles: 4 };
-    table[0x8E] = Opcode { instr: Instruction::STX, mode: AddressingMode::Absolute, cycles: 4 };
-
-    // STY - Store Y register
-    table[0x84] = Opcode { instr: Instruction::STY, mode: AddressingMode::DirectPage, cycles: 3 };
-    table[0x94] = Opcode { instr: Instruction::STY, mode: AddressingMode::DirectPageX, cycles: 4 };
-    table[0x8C] = Opcode { instr: Instruction::STY, mode: AddressingMode::Absolute, cycles: 4 };
-
-    // STZ - Store Zero
-    table[0x64] = Opcode { instr: Instruction::STZ, mode: AddressingMode::DirectPage, cycles: 3 };
-    table[0x74] = Opcode { instr: Instruction::STZ, mode: AddressingMode::DirectPageX, cycles: 4 };
-    table[0x9C] = Opcode { instr: Instruction::STZ, mode: AddressingMode::Absolute, cycles: 4 };
-    table[0x9E] = Opcode { instr: Instruction::STZ, mode: AddressingMode::AbsoluteX, cycles: 5 };
-
-    // Transfers
-    table[0xAA] = Opcode { instr: Instruction::TAX, mode: AddressingMode::Implied, cycles: 2 };
-    table[0xA8] = Opcode { instr: Instruction::TAY, mode: AddressingMode::Implied, cycles: 2 };
-    table[0x8A] = Opcode { instr: Instruction::TXA, mode: AddressingMode::Implied, cycles: 2 };
-    table[0x98] = Opcode { instr: Instruction::TYA, mode: AddressingMode::Implied, cycles: 2 };
-    table[0x9B] = Opcode { instr: Instruction::TXY, mode: AddressingMode::Implied, cycles: 2 };
-    table[0xBB] = Opcode { instr: Instruction::TYX, mode: AddressingMode::Implied, cycles: 2 };
-    table[0xBA] = Opcode { instr: Instruction::TSX, mode: AddressingMode::Implied, cycles: 2 };
-    table[0x9A] = Opcode { instr: Instruction::TXS, mode: AddressingMode::Implied, cycles: 2 };
-
-    table[0x5B] = Opcode { instr: Instruction::TCD, mode: AddressingMode::Implied, cycles: 2 };
-    table[0x7B] = Opcode { instr: Instruction::TDC, mode: AddressingMode::Implied, cycles: 2 };
-    table[0x1B] = Opcode { instr: Instruction::TCS, mode: AddressingMode::Implied, cycles: 2 };
-    table[0x3B] = Opcode { instr: Instruction::TSC, mode: AddressingMode::Implied, cycles: 2 };
-
-    table[0xEB] = Opcode { instr: Instruction::XBA, mode: AddressingMode::Implied, cycles: 3 };
-
-    table[0x54] = Opcode { instr: Instruction::MVN, mode: AddressingMode::BlockMove, cycles: 0 }; // Cycles covered in code
-    table[0x44] = Opcode { instr: Instruction::MVP, mode: AddressingMode::BlockMove, cycles: 0 }; // Cycles covered in code
-
-    // Interrupts
-    table[0x00] = Opcode { instr: Instruction::BRK, mode: AddressingMode::Implied, cycles: 7 };
-    table[0x40] = Opcode { instr: Instruction::RTI, mode: AddressingMode::Implied, cycles: 7 };
-    table[0xDB] = Opcode { instr: Instruction::STP, mode: AddressingMode::Implied, cycles: 3 };
-
-    // NOP
-    table[0xEA] = Opcode { instr: Instruction::NOP, mode: AddressingMode::Implied, cycles: 2 };
-
-    // Basic INX/DEX
-    table[0xE8] = Opcode { instr: Instruction::INX, mode: AddressingMode::Implied, cycles: 2 };
-    table[0xCA] = Opcode { instr: Instruction::DEX, mode: AddressingMode::Implied, cycles: 2 };
-
-    table[0xC8] = Opcode { instr: Instruction::INY, mode: AddressingMode::Implied, cycles: 2 };
-    table[0x88] = Opcode { instr: Instruction::DEY, mode: AddressingMode::Implied, cycles: 2 };
-
-    // Basic INC/DEC
-    table[0xE6] = Opcode { instr: Instruction::INC, mode: AddressingMode::DirectPage, cycles: 5 };
-    table[0xF6] = Opcode { instr: Instruction::INC, mode: AddressingMode::DirectPageX, cycles: 6 };
-    table[0xEE] = Opcode { instr: Instruction::INC, mode: AddressingMode::Absolute, cycles: 6 };
-    table[0xFE] = Opcode { instr: Instruction::INC, mode: AddressingMode::AbsoluteX, cycles: 7 };
-    table[0x1A] = Opcode { instr: Instruction::INC, mode: AddressingMode::Implied, cycles: 2 }; 
-
-    table[0xC6] = Opcode { instr: Instruction::DEC, mode: AddressingMode::DirectPage, cycles: 5 };
-    table[0xD6] = Opcode { instr: Instruction::DEC, mode: AddressingMode::DirectPageX, cycles: 6 };
-    table[0xCE] = Opcode { instr: Instruction::DEC, mode: AddressingMode::Absolute, cycles: 6 };
-    table[0xDE] = Opcode { instr: Instruction::DEC, mode: AddressingMode::AbsoluteX, cycles: 7 };
-    table[0x3A] = Opcode { instr: Instruction::DEC, mode: AddressingMode::Implied, cycles: 2 };
-
-    // Basic addition/subtraction
-    table[0x69] = Opcode { instr: Instruction::ADC, mode: AddressingMode::ImmediateAcc, cycles: 2 };
-    table[0x65] = Opcode { instr: Instruction::ADC, mode: AddressingMode::DirectPage, cycles: 3 };
-    table[0x75] = Opcode { instr: Instruction::ADC, mode: AddressingMode::DirectPageX, cycles: 4 };
-    table[0x6D] = Opcode { instr: Instruction::ADC, mode: AddressingMode::Absolute, cycles: 4 };
-    table[0x7D] = Opcode { instr: Instruction::ADC, mode: AddressingMode::AbsoluteX, cycles: 4 }; // +1 if page cross
-    table[0x79] = Opcode { instr: Instruction::ADC, mode: AddressingMode::AbsoluteY, cycles: 4 }; // +1 if page cross
-    table[0x61] = Opcode { instr: Instruction::ADC, mode: AddressingMode::IndirectX, cycles: 6 };
-    table[0x71] = Opcode { instr: Instruction::ADC, mode: AddressingMode::IndirectY, cycles: 5 }; // +1 if page cross
-
-    table[0xE9] = Opcode { instr: Instruction::SBC, mode: AddressingMode::ImmediateAcc, cycles: 2 };
-    table[0xE5] = Opcode { instr: Instruction::SBC, mode: AddressingMode::DirectPage, cycles: 3 };
-    table[0xF5] = Opcode { instr: Instruction::SBC, mode: AddressingMode::DirectPageX, cycles: 4 };
-    table[0xED] = Opcode { instr: Instruction::SBC, mode: AddressingMode::Absolute, cycles: 4 };
-    table[0xFD] = Opcode { instr: Instruction::SBC, mode: AddressingMode::AbsoluteX, cycles: 4 }; // +1 if page cross
-    table[0xF9] = Opcode { instr: Instruction::SBC, mode: AddressingMode::AbsoluteY, cycles: 4 }; // +1 if page cross
-    table[0xE1] = Opcode { instr: Instruction::SBC, mode: AddressingMode::IndirectX, cycles: 6 };
-    table[0xF1] = Opcode { instr: Instruction::SBC, mode: AddressingMode::IndirectY, cycles: 5 }; // +1 if page cross
-
-    // Bitwise
-
-    table[0x29] = Opcode { instr: Instruction::AND, mode: AddressingMode::ImmediateAcc, cycles: 2 };
-    table[0x25] = Opcode { instr: Instruction::AND, mode: AddressingMode::DirectPage, cycles: 3 };
-    table[0x35] = Opcode { instr: Instruction::AND, mode: AddressingMode::DirectPageX, cycles: 4 };
-    table[0x2D] = Opcode { instr: Instruction::AND, mode: AddressingMode::Absolute, cycles: 4 };
-    table[0x3D] = Opcode { instr: Instruction::AND, mode: AddressingMode::AbsoluteX, cycles: 4 }; // +1 if page cross
-    table[0x39] = Opcode { instr: Instruction::AND, mode: AddressingMode::AbsoluteY, cycles: 4 }; // +1 if page cross
-    table[0x21] = Opcode { instr: Instruction::AND, mode: AddressingMode::IndirectX, cycles: 6 };
-    table[0x31] = Opcode { instr: Instruction::AND, mode: AddressingMode::IndirectY, cycles: 5 }; // +1 if page cross
-
-    table[0x09] = Opcode { instr: Instruction::ORA, mode: AddressingMode::ImmediateAcc, cycles: 2 };
-    table[0x05] = Opcode { instr: Instruction::ORA, mode: AddressingMode::DirectPage, cycles: 3 };
-    table[0x15] = Opcode { instr: Instruction::ORA, mode: AddressingMode::DirectPageX, cycles: 4 };
-    table[0x0D] = Opcode { instr: Instruction::ORA, mode: AddressingMode::Absolute, cycles: 4 };
-    table[0x1D] = Opcode { instr: Instruction::ORA, mode: AddressingMode::AbsoluteX, cycles: 4 }; // +1 if page cross
-    table[0x19] = Opcode { instr: Instruction::ORA, mode: AddressingMode::AbsoluteY, cycles: 4 }; // +1 if page cross
-    table[0x01] = Opcode { instr: Instruction::ORA, mode: AddressingMode::IndirectX, cycles: 6 };
-    table[0x11] = Opcode { instr: Instruction::ORA, mode: AddressingMode::IndirectY, cycles: 5 }; // +1 if page cross
-
-    table[0x49] = Opcode { instr: Instruction::EOR, mode: AddressingMode::ImmediateAcc, cycles: 2 };
-    table[0x45] = Opcode { instr: Instruction::EOR, mode: AddressingMode::DirectPage, cycles: 3 };
-    table[0x55] = Opcode { instr: Instruction::EOR, mode: AddressingMode::DirectPageX, cycles: 4 };
-    table[0x4D] = Opcode { instr: Instruction::EOR, mode: AddressingMode::Absolute, cycles: 4 };
-    table[0x5D] = Opcode { instr: Instruction::EOR, mode: AddressingMode::AbsoluteX, cycles: 4 }; // +1 if page cross
-    table[0x59] = Opcode { instr: Instruction::EOR, mode: AddressingMode::AbsoluteY, cycles: 4 }; // +1 if page cross
-    table[0x41] = Opcode { instr: Instruction::EOR, mode: AddressingMode::IndirectX, cycles: 6 };
-    table[0x51] = Opcode { instr: Instruction::EOR, mode: AddressingMode::IndirectY, cycles: 5 }; // +1 if page cross
-
-    // Bitwise test
-    table[0x14] = Opcode { instr: Instruction::TRB, mode: AddressingMode::DirectPage, cycles: 5 };
-    table[0x1C] = Opcode { instr: Instruction::TRB, mode: AddressingMode::Absolute, cycles: 6 };
-
-    table[0x04] = Opcode { instr: Instruction::TSB, mode: AddressingMode::DirectPage, cycles: 5 };
-    table[0x0C] = Opcode { instr: Instruction::TSB, mode: AddressingMode::Absolute, cycles: 6 };
-
-    table[0x24] = Opcode { instr: Instruction::BIT, mode: AddressingMode::DirectPage, cycles: 3 };
-    table[0x34] = Opcode { instr: Instruction::BIT, mode: AddressingMode::DirectPageX, cycles: 4 };
-    table[0x2C] = Opcode { instr: Instruction::BIT, mode: AddressingMode::Absolute, cycles: 4 };
-    table[0x3C] = Opcode { instr: Instruction::BIT, mode: AddressingMode::AbsoluteX, cycles: 4 };
-    table[0x89] = Opcode { instr: Instruction::BIT, mode: AddressingMode::ImmediateAcc, cycles: 2 };
-
-    // Shifting
-    table[0x0A] = Opcode { instr: Instruction::ASL, mode: AddressingMode::Implied, cycles: 2 };
-    table[0x06] = Opcode { instr: Instruction::ASL, mode: AddressingMode::DirectPage, cycles: 5 };
-    table[0x16] = Opcode { instr: Instruction::ASL, mode: AddressingMode::DirectPageX, cycles: 6 };
-    table[0x0E] = Opcode { instr: Instruction::ASL, mode: AddressingMode::Absolute, cycles: 6 };
-    table[0x1E] = Opcode { instr: Instruction::ASL, mode: AddressingMode::AbsoluteX, cycles: 7 };
-
-    table[0x4A] = Opcode { instr: Instruction::LSR, mode: AddressingMode::Implied, cycles: 2 };
-    table[0x46] = Opcode { instr: Instruction::LSR, mode: AddressingMode::DirectPage, cycles: 5 };
-    table[0x56] = Opcode { instr: Instruction::LSR, mode: AddressingMode::DirectPageX, cycles: 6 };
-    table[0x4E] = Opcode { instr: Instruction::LSR, mode: AddressingMode::Absolute, cycles: 6 };
-    table[0x5E] = Opcode { instr: Instruction::LSR, mode: AddressingMode::AbsoluteX, cycles: 7 };
-
-    table[0x2A] = Opcode { instr: Instruction::ROL, mode: AddressingMode::Implied, cycles: 2 };
-    table[0x26] = Opcode { instr: Instruction::ROL, mode: AddressingMode::DirectPage, cycles: 5 };
-    table[0x36] = Opcode { instr: Instruction::ROL, mode: AddressingMode::DirectPageX, cycles: 6 };
-    table[0x2E] = Opcode { instr: Instruction::ROL, mode: AddressingMode::Absolute, cycles: 6 };
-    table[0x3E] = Opcode { instr: Instruction::ROL, mode: AddressingMode::AbsoluteX, cycles: 7 };
-
-    table[0x6A] = Opcode { instr: Instruction::ROR, mode: AddressingMode::Implied, cycles: 2 };
-    table[0x66] = Opcode { instr: Instruction::ROR, mode: AddressingMode::DirectPage, cycles: 5 };
-    table[0x76] = Opcode { instr: Instruction::ROR, mode: AddressingMode::DirectPageX, cycles: 6 };
-    table[0x6E] = Opcode { instr: Instruction::ROR, mode: AddressingMode::Absolute, cycles: 6 };
-    table[0x7E] = Opcode { instr: Instruction::ROR, mode: AddressingMode::AbsoluteX, cycles: 7 };
-
-    // Flag control
-    table[0x18] = Opcode { instr: Instruction::CLC, mode: AddressingMode::Implied, cycles: 2 };
-    table[0x38] = Opcode { instr: Instruction::SEC, mode: AddressingMode::Implied, cycles: 2 };
-    table[0x58] = Opcode { instr: Instruction::CLI, mode: AddressingMode::Implied, cycles: 2 };
-    table[0x78] = Opcode { instr: Instruction::SEI, mode: AddressingMode::Implied, cycles: 2 };
-    table[0xD8] = Opcode { instr: Instruction::CLD, mode: AddressingMode::Implied, cycles: 2 };
-    table[0xF8] = Opcode { instr: Instruction::SED, mode: AddressingMode::Implied, cycles: 2 };
-
-    table[0xFB] = Opcode { instr: Instruction::XCE, mode: AddressingMode::Implied, cycles: 2 };
-
-    // CMP / CPX / CPY
-    table[0xC9] = Opcode { instr: Instruction::CMP, mode: AddressingMode::ImmediateAcc, cycles: 2 };
-    table[0xC5] = Opcode { instr: Instruction::CMP, mode: AddressingMode::DirectPage, cycles: 3 };
-    table[0xCD] = Opcode { instr: Instruction::CMP, mode: AddressingMode::Absolute, cycles: 4 };
-    table[0xD5] = Opcode { instr: Instruction::CMP, mode: AddressingMode::DirectPageX, cycles: 4 };
-    table[0xDD] = Opcode { instr: Instruction::CMP, mode: AddressingMode::AbsoluteX, cycles: 4 }; // +1 if page cross
-    table[0xD9] = Opcode { instr: Instruction::CMP, mode: AddressingMode::AbsoluteY, cycles: 4 }; // +1 if page cross
-    table[0xC1] = Opcode { instr: Instruction::CMP, mode: AddressingMode::IndirectX, cycles: 6 };
-    table[0xD1] = Opcode { instr: Instruction::CMP, mode: AddressingMode::IndirectY, cycles: 5 }; // +1 if page cross
-
-    table[0xE0] = Opcode { instr: Instruction::CPX, mode: AddressingMode::ImmediateIdx, cycles: 2 };
-    table[0xE4] = Opcode { instr: Instruction::CPX, mode: AddressingMode::DirectPage, cycles: 3 };
-    table[0xEC] = Opcode { instr: Instruction::CPX, mode: AddressingMode::Absolute, cycles: 4 };
-
-    table[0xC0] = Opcode { instr: Instruction::CPY, mode: AddressingMode::ImmediateIdx, cycles: 2 };
-    table[0xC4] = Opcode { instr: Instruction::CPY, mode: AddressingMode::DirectPage, cycles: 3 };
-    table[0xCC] = Opcode { instr: Instruction::CPY, mode: AddressingMode::Absolute, cycles: 4 };
-
-    // Branches
-    table[0x10] = Opcode { instr: Instruction::BPL, mode: AddressingMode::Relative, cycles: 2 }; // +1 if page cross, +1 if branched
-    table[0x30] = Opcode { instr: Instruction::BMI, mode: AddressingMode::Relative, cycles: 2 }; // +1 if page cross, +1 if branched
-    table[0x50] = Opcode { instr: Instruction::BVC, mode: AddressingMode::Relative, cycles: 2 }; // +1 if page cross, +1 if branched
-    table[0x70] = Opcode { instr: Instruction::BVS, mode: AddressingMode::Relative, cycles: 2 }; // +1 if page cross, +1 if branched
-    table[0x90] = Opcode { instr: Instruction::BCC, mode: AddressingMode::Relative, cycles: 2 }; // +1 if page cross, +1 if branched
-    table[0xB0] = Opcode { instr: Instruction::BCS, mode: AddressingMode::Relative, cycles: 2 }; // +1 if page cross, +1 if branched
-    table[0xD0] = Opcode { instr: Instruction::BNE, mode: AddressingMode::Relative, cycles: 2 }; // +1 if page cross, +1 if branched
-    table[0xF0] = Opcode { instr: Instruction::BEQ, mode: AddressingMode::Relative, cycles: 2 }; // +1 if page cross, +1 if branched
-    
-    table[0x80] = Opcode { instr: Instruction::BRA, mode: AddressingMode::Relative, cycles: 2 }; // +1 if page crossed, +1 added by branch function
-
-    // Stack
-    table[0x48] = Opcode { instr: Instruction::PHA, mode: AddressingMode::Implied, cycles: 3 };
-    table[0x68] = Opcode { instr: Instruction::PLA, mode: AddressingMode::Implied, cycles: 4 };
-    table[0x08] = Opcode { instr: Instruction::PHP, mode: AddressingMode::Implied, cycles: 3 };
-    table[0x28] = Opcode { instr: Instruction::PLP, mode: AddressingMode::Implied, cycles: 4 };
-    table[0xDA] = Opcode { instr: Instruction::PHX, mode: AddressingMode::Implied, cycles: 3 };
-    table[0xFA] = Opcode { instr: Instruction::PLX, mode: AddressingMode::Implied, cycles: 4 };
-    table[0x5A] = Opcode { instr: Instruction::PHY, mode: AddressingMode::Implied, cycles: 3 };
-    table[0x7A] = Opcode { instr: Instruction::PLY, mode: AddressingMode::Implied, cycles: 4 };
-    table[0x4B] = Opcode { instr: Instruction::PHK, mode: AddressingMode::Implied, cycles: 3 };
-    table[0xAB] = Opcode { instr: Instruction::PLB, mode: AddressingMode::Implied, cycles: 4 };
-    table[0x8B] = Opcode { instr: Instruction::PHB, mode: AddressingMode::Implied, cycles: 3 };
-    table[0xF4] = Opcode { instr: Instruction::PEA, mode: AddressingMode::ImmediateWord, cycles: 5 };
-
-    // Subroutine control
-    table[0x4C] = Opcode { instr: Instruction::JMP, mode: AddressingMode::Absolute, cycles: 3 };
-    table[0x6C] = Opcode { instr: Instruction::JMP, mode: AddressingMode::Indirect, cycles: 5 };
-    table[0x7C] = Opcode { instr: Instruction::JMP, mode: AddressingMode::IndirectAbsoluteX, cycles: 6 };
-
-    table[0x20] = Opcode { instr: Instruction::JSR, mode: AddressingMode::Absolute, cycles: 6 };
-    table[0x22] = Opcode { instr: Instruction::JSL, mode: AddressingMode::Long, cycles: 5 };
-
-    table[0x60] = Opcode { instr: Instruction::RTS, mode: AddressingMode::Implied, cycles: 6 };
-    table[0x6B] = Opcode { instr: Instruction::RTL, mode: AddressingMode::Implied, cycles: 6 };
-
-    // Mode switching
-    table[0xC2] = Opcode { instr: Instruction::REP, mode: AddressingMode::ImmediateByte, cycles: 3 };
-    table[0xE2] = Opcode { instr: Instruction::SEP, mode: AddressingMode::ImmediateByte, cycles: 3 };
-
-    // Reserved
-    table[0x42] = Opcode { instr: Instruction::WDM, mode: AddressingMode::Implied, cycles: 2 };
-
-    table // Don't remove
-};
+pub const OPCODES: [Opcode; 256] =
+    generate_table!(
+        0x00 => (BRK, Stack,               7),
+        0x01 => (ORA, DirectIndirectX,     6),
+        0x02 => (COP, Stack,               7),
+        0x03 => (ORA, StackRelative,       4),
+        0x04 => (TSB, Direct,              5),
+        0x05 => (ORA, Direct,              3),
+        0x06 => (ASL, Direct,              5),
+        0x07 => (ORA, DirectIndirectLong,  6),
+        0x08 => (PHP, Stack,               3),
+        0x09 => (ORA, ImmediateAcc,        2),
+        0x0A => (ASL, Implied,             2),
+        0x0B => (PHD, Stack,               4),
+        0x0C => (TSB, Absolute,            6),
+        0x0D => (ORA, Absolute,            4),
+        0x0E => (ASL, Absolute,            6),
+        0x0F => (ORA, AbsoluteLong,        5),
+        0x10 => (BPL, Relative,            2),
+        0x11 => (ORA, DirectIndirectY,     5),
+        0x12 => (ORA, DirectIndirect,      5),
+        0x13 => (ORA, StackRelativeY,      7),
+        0x14 => (TRB, Direct,              5),
+        0x15 => (ORA, DirectX,             4),
+        0x16 => (ASL, DirectX,             6),
+        0x17 => (ORA, DirectIndirectLongY, 6),
+        0x18 => (CLC, Implied,             2),
+        0x19 => (ORA, AbsoluteY,           4),
+        0x1A => (INC, Implied,             2),
+        0x1B => (TCS, Implied,             2),
+        0x1C => (TRB, Absolute,            6),
+        0x1D => (ORA, AbsoluteX,           4),
+        0x1E => (ASL, AbsoluteX,           7),
+        0x1F => (ORA, AbsoluteLongX,       5),
+        0x20 => (JSR, Absolute,            6),
+        0x21 => (AND, DirectIndirectX,     6),
+        0x22 => (JSL, AbsoluteLong,        8),
+        0x23 => (AND, StackRelative,       4),
+        0x24 => (BIT, Direct,              3),
+        0x25 => (AND, Direct,              3),
+        0x26 => (ROL, Direct,              5),
+        0x27 => (AND, DirectIndirectLong,  6),
+        0x28 => (PLP, Stack,               4),
+        0x29 => (AND, ImmediateAcc,        2),
+        0x2A => (ROL, Implied,             2),
+        0x2B => (PLD, Stack,               5),
+        0x2C => (BIT, Absolute,            4),
+        0x2D => (AND, Absolute,            4),
+        0x2E => (ROL, Absolute,            6),
+        0x2F => (AND, AbsoluteLong,        5),
+        0x30 => (BMI, Relative,            2),
+        0x31 => (AND, DirectIndirectX,     5),
+        0x32 => (AND, DirectIndirect,      5),
+        0x33 => (AND, StackRelative,       7),
+        0x34 => (BIT, DirectX,             4),
+        0x35 => (AND, DirectX,             4),
+        0x36 => (ROL, DirectX,             6),
+        0x37 => (AND, DirectIndirectLongY, 6),
+        0x38 => (SEC, Implied,             2),
+        0x39 => (AND, AbsoluteY,           4),
+        0x3A => (DEC, ImmediateAcc,        2),
+        0x3B => (TSC, Implied,             2),
+        0x3C => (BIT, AbsoluteX,           4),
+        0x3D => (AND, AbsoluteX,           4),
+        0x3E => (ROL, AbsoluteX,           7),
+        0x3F => (AND, AbsoluteLongX,       5),
+        0x40 => (RTI, Stack,               7),
+        0x41 => (EOR, DirectIndirectX,     6),
+        0x42 => (WDM, Implied,             2),
+        0x43 => (EOR, StackRelative,       4),
+        0x44 => (MVP, BlockMove,           7),
+        0x45 => (EOR, Direct,              3),
+        0x46 => (LSR, Direct,              5),
+        0x47 => (EOR, DirectIndirectLong,  6),
+        0x48 => (PHA, Stack,               3),
+        0x49 => (EOR, ImmediateAcc,        2),
+        0x4A => (LSR, ImmediateAcc,        2),
+        0x4B => (PHK, Stack,               3),
+        0x4C => (JMP, Absolute,            3),
+        0x4D => (EOR, Absolute,            4),
+        0x4E => (LSR, Absolute,            6),
+        0x4F => (EOR, AbsoluteLong,        5),
+        0x50 => (BVC, Relative,            2),
+        0x51 => (EOR, DirectIndirectX,     5),
+        0x52 => (EOR, DirectIndirect,      5),
+        0x53 => (EOR, StackRelativeY,      7),
+        0x54 => (MVN, BlockMove,           7),
+        0x55 => (EOR, DirectX,             4),
+        0x56 => (LSR, DirectX,             6),
+        0x57 => (EOR, DirectIndirectLongY, 6),
+        0x58 => (CLI, Implied,             2),
+        0x59 => (EOR, AbsoluteY,           4),
+        0x5A => (PHY, Stack,               3),
+        0x5B => (TCD, Implied,             2),
+        0x5C => (JMP, AbsoluteLong,        4),
+        0x5D => (EOR, AbsoluteX,           4),
+        0x5E => (LSR, AbsoluteX,           7),
+        0x5F => (EOR, AbsoluteLongX,       5),
+        0x60 => (RTS, Stack,               6),
+        0x61 => (ADC, DirectIndirectX,     6),
+        0x62 => (PER, ImmediateWord,               6),
+        0x63 => (ADC, StackRelative,       4),
+        0x64 => (STZ, Direct,              3),
+        0x65 => (ADC, Direct,              3),
+        0x66 => (ROR, Direct,              5),
+        0x67 => (ADC, DirectIndirectLong,  6),
+        0x68 => (PLA, Stack,               4),
+        0x69 => (ADC, ImmediateAcc,        2),
+        0x6A => (ROR, ImmediateAcc,        2),
+        0x6B => (RTL, Stack,               6),
+        0x6C => (JMP, AbsoluteIndirect,    5),
+        0x6D => (ADC, Absolute,            4),
+        0x6E => (ROR, Absolute,            6),
+        0x6F => (ADC, AbsoluteLong,        5),
+        0x70 => (BVS, Relative,            2),
+        0x71 => (ADC, DirectIndirectY,     5),
+        0x72 => (ADC, DirectIndirect,      5),
+        0x73 => (ADC, StackRelativeY,      7),
+        0x74 => (STZ, DirectX,             4),
+        0x75 => (ADC, DirectX,             4),
+        0x76 => (ROR, DirectX,             6),
+        0x77 => (ADC, DirectIndirectLongY, 6),
+        0x78 => (SEI, Implied,             2),
+        0x79 => (ADC, AbsoluteY,           4),
+        0x7A => (PLY, Stack,               4),
+        0x7B => (TDC, Implied,             2),
+        0x7C => (JMP, AbsoluteIndirectX,   6),
+        0x7D => (ADC, AbsoluteX,           4),
+        0x7E => (ROR, AbsoluteX,           7),
+        0x7F => (ADC, AbsoluteLongX,       5),
+        0x80 => (BRA, Relative,            2),
+        0x81 => (STA, DirectIndirectX,     6),
+        0x82 => (BRL, RelativeLong,        4),
+        0x83 => (STA, StackRelative,       4),
+        0x84 => (STY, Direct,              3),
+        0x85 => (STA, Direct,              3),
+        0x86 => (STX, Direct,              3),
+        0x87 => (STA, DirectIndirectLong,  2),
+        0x88 => (DEY, Implied,             2),
+        0x89 => (BIT, ImmediateAcc,        2),
+        0x8A => (TXA, Implied,             2),
+        0x8B => (PHB, Stack,               3),
+        0x8C => (STY, Absolute,            4),
+        0x8D => (STA, Absolute,            4),
+        0x8E => (STX, Absolute,            4),
+        0x8F => (STA, AbsoluteLong,        5),
+        0x90 => (BCC, Relative,            2),
+        0x91 => (STA, DirectIndirectY,     6),
+        0x92 => (STA, DirectIndirect,      5),
+        0x93 => (STA, StackRelativeY,      7),
+        0x94 => (STY, DirectX,             4),
+        0x95 => (STA, DirectX,             4),
+        0x96 => (STX, DirectY,             4),
+        0x97 => (STA, DirectIndirectLongY, 6),
+        0x98 => (TYA, Implied,             2),
+        0x99 => (STA, AbsoluteY,           5),
+        0x9A => (TXS, Implied,             2),
+        0x9B => (TXY, Implied,             2),
+        0x9C => (STZ, Absolute,            4),
+        0x9D => (STA, AbsoluteX,           5),
+        0x9E => (STZ, AbsoluteX,           5),
+        0x9F => (STA, AbsoluteLongX,       5),
+        0xA0 => (LDY, ImmediateIdx,        2),
+        0xA1 => (LDA, DirectIndirectX,     6),
+        0xA2 => (LDX, ImmediateIdx,        2),
+        0xA3 => (LDA, StackRelative,       4),
+        0xA4 => (LDY, Direct,              3),
+        0xA5 => (LDA, Direct,              3),
+        0xA6 => (LDX, Direct,              3),
+        0xA7 => (LDA, DirectIndirectLong,  3),
+        0xA8 => (TAY, Implied,             2),
+        0xA9 => (LDA, ImmediateAcc,        2),
+        0xAA => (TAX, Implied,             2),
+        0xAB => (PLB, Stack,               4),
+        0xAC => (LDY, Absolute,            4),
+        0xAD => (LDA, Absolute,            4),
+        0xAE => (LDX, Absolute,            4),
+        0xAF => (LDA, AbsoluteLong,        5),
+        0xB0 => (BCS, Relative,            2),
+        0xB1 => (LDA, DirectIndirectY,     5),
+        0xB2 => (LDA, DirectIndirect,      5),
+        0xB3 => (LDA, StackRelativeY,      7),
+        0xB4 => (LDY, DirectX,             4),
+        0xB5 => (LDA, DirectX,             4),
+        0xB6 => (LDX, DirectY,             4),
+        0xB7 => (LDA, DirectIndirectLongY, 6),
+        0xB8 => (CLV, Implied,             2),
+        0xB9 => (LDA, AbsoluteY,           4),
+        0xBA => (TSX, Implied,             2),
+        0xBB => (TYX, Implied,             2),
+        0xBC => (LDY, AbsoluteX,           4),
+        0xBD => (LDA, AbsoluteX,           4),
+        0xBE => (LDX, AbsoluteY,           4),
+        0xBF => (LDA, AbsoluteLongX,       5),
+        0xC0 => (CPY, ImmediateIdx,        2),
+        0xC1 => (CMP, DirectIndirectX,     6),
+        0xC2 => (REP, ImmediateByte,       3),
+        0xC3 => (CMP, StackRelative,       4),
+        0xC4 => (CPY, Direct,              3),
+        0xC5 => (CMP, Direct,              3),
+        0xC6 => (DEC, Direct,              5),
+        0xC7 => (CMP, DirectIndirectLong,  6),
+        0xC8 => (INY, Implied,             2),
+        0xC9 => (CMP, ImmediateAcc,        2),
+        0xCA => (DEX, Implied,             2),
+        0xCB => (WAI, Implied,             3),
+        0xCC => (CPY, Absolute,            4),
+        0xCD => (CMP, Absolute,            4),
+        0xCE => (DEC, Absolute,            6),
+        0xCF => (CMP, AbsoluteLong,        5),
+        0xD0 => (BNE, Relative,            2),
+        0xD1 => (CMP, DirectIndirectY,     5),
+        0xD2 => (CMP, DirectIndirect,      5),
+        0xD3 => (CMP, StackRelativeY,      7),
+        0xD4 => (PEI, Direct,               6),
+        0xD5 => (CMP, DirectX,             4),
+        0xD6 => (DEC, DirectX,             6),
+        0xD7 => (CMP, DirectIndirectLongY, 6),
+        0xD8 => (CLD, Implied,             2),
+        0xD9 => (CMP, AbsoluteY,           4),
+        0xDA => (PHX, Stack,               3),
+        0xDB => (STP, Implied,             3),
+        0xDC => (JML, AbsoluteIndirect,    6),
+        0xDD => (CMP, AbsoluteX,           4),
+        0xDE => (DEC, AbsoluteX,           7),
+        0xDF => (CMP, AbsoluteLongX,       5),
+        0xE0 => (CPX, ImmediateIdx,        2),
+        0xE1 => (SBC, DirectIndirectX,     6),
+        0xE2 => (SEP, ImmediateByte,       3),
+        0xE3 => (SBC, StackRelative,       4),
+        0xE4 => (CPX, Direct,              3),
+        0xE5 => (SBC, Direct,              3),
+        0xE6 => (INC, Direct,              5),
+        0xE7 => (SBC, DirectIndirectLong,  6),
+        0xE8 => (INX, Implied,             2),
+        0xE9 => (SBC, ImmediateAcc,        2),
+        0xEA => (NOP, Implied,             2),
+        0xEB => (XBA, Implied,             3),
+        0xEC => (CPX, Absolute,            4),
+        0xED => (SBC, Absolute,            4),
+        0xEE => (INC, Absolute,            6),
+        0xEF => (SBC, AbsoluteLong,        5),
+        0xF0 => (BEQ, Relative,            2),
+        0xF1 => (SBC, DirectIndirectY,     5),
+        0xF2 => (SBC, DirectIndirect,      5),
+        0xF3 => (SBC, StackRelativeY,      7),
+        0xF4 => (PEA, ImmediateWord,       5),
+        0xF5 => (SBC, DirectX,             4),
+        0xF6 => (INC, DirectX,             6),
+        0xF7 => (SBC, DirectIndirectLongY, 6),
+        0xF8 => (SED, Implied,             2),
+        0xF9 => (SBC, AbsoluteY,           4),
+        0xFA => (PLX, Stack,               4),
+        0xFB => (XCE, Implied,             2),
+        0xFC => (JSR, AbsoluteIndirectX,   8),
+        0xFD => (SBC, AbsoluteX,           4),
+        0xFE => (INC, AbsoluteX,           7),
+        0xFF => (SBC, AbsoluteLongX,       5),
+    );

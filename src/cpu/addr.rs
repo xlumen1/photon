@@ -1,6 +1,6 @@
 use crate::aux::Operand;
 use super::CPU;
-
+/*
 // Immediate Addressing
 
 pub(super) fn addr_imm_acc(s: &mut CPU) -> Operand {
@@ -207,4 +207,179 @@ pub(super) fn addr_sig_byte(s: &mut CPU) -> Operand {
     s.pc = s.pc.wrapping_add(1);
     Operand::None
 }
+*/
 
+pub(super) fn addr_abs(s: &mut CPU) -> Operand {
+    let addr = s.fetch16() as u32;
+    let b = (s.db as u32) << 16;
+    Operand::Address(addr + b)
+}
+
+pub(super) fn addr_abs_ind_x(s: &mut CPU) -> Operand {
+    let ptr = s.fetch16() as u32;
+
+    let addr = s.read16(ptr) as u32;
+    let b = (s.db as u32) << 16;
+    Operand::Address((addr + b).wrapping_add(s.x as u32))
+}
+
+pub(super) fn addr_abs_x(s: &mut CPU) -> Operand {
+    let addr = s.fetch16() as u32;
+    let b = (s.db as u32) << 16;
+
+    Operand::Address((addr + b).wrapping_add(s.x as u32))
+}
+
+pub(super) fn addr_abs_y(s: &mut CPU) -> Operand {
+    let addr = s.fetch16() as u32;
+    let b = (s.db as u32) << 16;
+
+    Operand::Address((addr + b).wrapping_add(s.y as u32))
+}
+
+pub(super) fn addr_abs_ind(s: &mut CPU) -> Operand {
+    let ptr = s.fetch16() as u32;
+
+    let addr = s.read16(ptr) as u32;
+    let b = (s.db as u32) << 16;
+    Operand::Address(addr + b)
+}
+
+pub(super) fn addr_abs_long_x(s: &mut CPU) -> Operand {
+    let addr = s.fetch16() as u32;
+    let b = (s.fetch8() as u32) << 16;
+
+    Operand::Address((addr + b).wrapping_add(s.x as u32))
+}
+
+pub(super) fn addr_abs_long(s: &mut CPU) -> Operand {
+    let addr = s.fetch16() as u32;
+    let b = (s.fetch8() as u32) << 16;
+
+    Operand::Address(addr + b)
+}
+
+pub(super) fn addr_blk_mov(s: &mut CPU) -> Operand {
+    let src_bank = s.fetch8();
+    let dst_bank = s.fetch8();
+
+    Operand::Block { src_bank, dst_bank }
+}
+
+pub(super) fn addr_dir_ind_x(s: &mut CPU) -> Operand {
+    let offset = s.fetch8() as u16;
+    let addr = (s.dp as u16).wrapping_add(offset).wrapping_add(s.x as u16);
+
+    Operand::Address(((s.db as u32) << 16) + addr as u32)
+}
+
+pub(super) fn addr_dir_x(s: &mut CPU) -> Operand {
+    let offset = s.fetch8() as u16;
+    let addr = (s.dp as u16).wrapping_add(offset).wrapping_add(s.x as u16);
+
+    Operand::Address(addr as u32)
+}
+
+pub(super) fn addr_dir_y(s: &mut CPU) -> Operand {
+    let offset = s.fetch8() as u16;
+    let addr = (s.dp as u16).wrapping_add(offset).wrapping_add(s.y as u16);
+
+    Operand::Address(addr as u32)
+}
+
+pub(super) fn addr_dir_ind_y(s: &mut CPU) -> Operand {
+    let offset = s.fetch8() as u16;
+    let addr = (s.dp as u16).wrapping_add(offset).wrapping_add(s.y as u16);
+    let b = (s.db as u32) << 16;
+
+    Operand::Address((addr as u32) + b)
+}
+
+pub(super) fn addr_dir_ind_long_y(s: &mut CPU) -> Operand {
+    let offset = s.fetch8() as u32;
+    let addr = (s.dp as u32).wrapping_add(offset).wrapping_add(s.y as u32);
+
+    Operand::Address(addr)
+}
+
+pub(super) fn addr_dir_ind_long(s: &mut CPU) -> Operand {
+    let offset = s.fetch8() as u32;
+    let addr = (s.dp as u32).wrapping_add(offset);
+
+    Operand::Address(addr)
+}
+
+pub(super) fn addr_dir_ind(s: &mut CPU) -> Operand {
+    let offset = s.fetch8() as u16;
+    let addr = (s.dp as u16).wrapping_add(offset);
+    let b = (s.db as u32) << 16;
+
+    Operand::Address(addr as u32 + b)
+}
+
+pub(super) fn addr_dir(s: &mut CPU) -> Operand {
+    let offset = s.fetch8() as u16;
+    let addr = (s.dp as u16).wrapping_add(offset);
+
+    Operand::Address(addr as u32)
+}
+
+pub(super) fn addr_imm_acc(s: &mut CPU) -> Operand {
+    if s.acc_size() == 1 {
+        Operand::Immediate(s.fetch8() as u16)
+    } else {
+        Operand::Immediate(s.fetch16())
+    }
+}
+
+pub(super) fn addr_imm_idx(s: &mut CPU) -> Operand {
+    if s.idx_size() == 1 {
+        Operand::Immediate(s.fetch8() as u16)
+    } else {
+        Operand::Immediate(s.fetch16())
+    }
+}
+
+pub(super) fn addr_imm_byt(s: &mut CPU) -> Operand {
+    Operand::Immediate(s.fetch8() as u16)
+}
+
+pub(super) fn addr_imm_wrd(s: &mut CPU) -> Operand {
+    Operand::Immediate(s.fetch16())
+}
+
+pub(super) fn addr_imp(_: &mut CPU) -> Operand {
+    Operand::None
+}
+
+pub(super) fn addr_rel_long(s: &mut CPU) -> Operand {
+    let offset = s.fetch16() as i16;
+    let target = s.pc.wrapping_add(offset as u16);
+
+    Operand::Relative(target as i16)
+}
+
+pub(super) fn addr_rel(s: &mut CPU) -> Operand {
+    let offset = s.fetch8() as i8;
+    let target = s.pc.wrapping_add(offset as u16);
+
+    Operand::Relative(target as i16)
+}
+
+pub(super) fn addr_stack(s: &mut CPU) -> Operand {
+    Operand::Address(s.sp as u32)
+}
+
+pub(super) fn addr_stack_rel(s: &mut CPU) -> Operand {
+    let offset = s.fetch8() as u16;
+    let addr = s.sp.wrapping_add(offset);
+    Operand::Address(addr as u32)
+}
+
+pub(super) fn addr_stack_rel_y(s: &mut CPU) -> Operand {
+    let offset = s.fetch8() as u16;
+    let addr = s.sp.wrapping_add(offset).wrapping_add(s.y);
+
+    let b = (s.dp as u32) << 16;
+    Operand::Address(addr as u32 + b)
+}

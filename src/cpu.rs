@@ -190,7 +190,7 @@ impl CPU {
     fn set_emulation(&mut self, mode: bool) {
         self.emulation = mode;
         if mode {
-            let lo = (self.sp & 0x00FF) as u16;
+            let lo: u16 = (self.sp & 0x00FF) as u16;
             self.sp = 0x0100u16 | (lo & 0x00FF);
         }
     }
@@ -326,31 +326,32 @@ impl CPU {
         self.inst_cycles(op.cycles as i16);
 
         let operand = match op.mode {
-            AddressingMode::Implied           => Operand::None,
-            AddressingMode::ImmediateAcc      => addr::addr_imm_acc(self),
-            AddressingMode::ImmediateIdx      => addr::addr_imm_idx(self),
-            AddressingMode::ImmediateByte     => addr::addr_imm_byte(self),
-            AddressingMode::ImmediateWord     => addr::addr_imm_word(self),
-            AddressingMode::Absolute          => addr::addr_abs(self),
-            AddressingMode::AbsoluteX         => addr::addr_abs_x(self),
-            AddressingMode::AbsoluteY         => addr::addr_abs_y(self),
-            AddressingMode::AbsoluteLong      => addr::addr_abs_long(self),
-            AddressingMode::AbsoluteLongX     => addr::addr_abs_long_x(self),
-            AddressingMode::AbsoluteLongY     => addr::addr_abs_long_y(self),
-            AddressingMode::DirectPage        => addr::addr_dp(self),
-            AddressingMode::DirectPageX       => addr::addr_dp_x(self),
-            AddressingMode::DirectPageY       => addr::addr_dp_y(self),
-            AddressingMode::Indirect          => addr::addr_ind_abs(self),
-            AddressingMode::IndirectDP        => addr::addr_dp_ind(self),
-            AddressingMode::IndirectX         => addr::addr_dp_ind_x(self),
-            AddressingMode::IndirectY         => addr::addr_dp_ind_y(self),
-            AddressingMode::IndirectAbsoluteX => addr::addr_ind_abs_x(self),
-            AddressingMode::Relative          => addr::addr_rel(self),
-            AddressingMode::RelativeLong      => addr::addr_rel_long(self),
-            AddressingMode::StackRelative     => addr::addr_sr(self),
-            AddressingMode::StackRelativeY    => addr::addr_sr_ind_y(self),
-            AddressingMode::BlockMove         => addr::addr_blk_mov(self),
-            AddressingMode::SigByte           => addr::addr_sig_byte(self),
+            AddressingMode::Absolute            => addr::addr_abs(self),
+            AddressingMode::AbsoluteIndirectX   => addr::addr_abs_ind_x(self),
+            AddressingMode::AbsoluteX           => addr::addr_abs_x(self),
+            AddressingMode::AbsoluteY           => addr::addr_abs_y(self),
+            AddressingMode::AbsoluteIndirect    => addr::addr_abs_ind(self),
+            AddressingMode::AbsoluteLongX       => addr::addr_abs_long_x(self),
+            AddressingMode::AbsoluteLong        => addr::addr_abs_long(self),
+            AddressingMode::BlockMove           => addr::addr_blk_mov(self),
+            AddressingMode::DirectIndirectX     => addr::addr_dir_ind_x(self),
+            AddressingMode::DirectX             => addr::addr_dir_x(self),
+            AddressingMode::DirectY             => addr::addr_dir_y(self),
+            AddressingMode::DirectIndirectY     => addr::addr_dir_ind_y(self),
+            AddressingMode::DirectIndirectLongY => addr::addr_dir_ind_long_y(self),
+            AddressingMode::DirectIndirectLong  => addr::addr_dir_ind_long(self),
+            AddressingMode::DirectIndirect      => addr::addr_dir_ind(self),
+            AddressingMode::Direct              => addr::addr_dir(self),
+            AddressingMode::ImmediateAcc        => addr::addr_imm_acc(self),
+            AddressingMode::ImmediateIdx        => addr::addr_imm_idx(self),
+            AddressingMode::ImmediateByte       => addr::addr_imm_byt(self),
+            AddressingMode::ImmediateWord       => addr::addr_imm_wrd(self),
+            AddressingMode::Implied             => addr::addr_imp(self),
+            AddressingMode::RelativeLong        => addr::addr_rel_long(self),
+            AddressingMode::Relative            => addr::addr_rel(self),
+            AddressingMode::Stack               => addr::addr_stack(self),
+            AddressingMode::StackRelative       => addr::addr_stack_rel(self),
+            AddressingMode::StackRelativeY      => addr::addr_stack_rel_y(self),
         };
 
         #[cfg(debug_assertions)]
