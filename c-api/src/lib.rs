@@ -1,7 +1,4 @@
-mod cpu;
-mod op;
-mod aux;
-use crate::cpu::CPU;
+use photon::CPU;
 
 pub type MemReadCb = extern "C" fn(addr: u32) -> u8;
 pub type MemWriteCb = extern "C" fn(addr: u32, val: u8);

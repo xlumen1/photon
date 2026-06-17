@@ -1,6 +1,7 @@
 mod exec;
 mod addr;
-use crate::{aux::{Operand, Status, Width}, op::{AddressingMode, OPCODES}};
+
+use crate::{State, aux::{Operand, Status, Width}, op::{AddressingMode, OPCODES}};
 
 #[cfg(debug_assertions)]
 use colored::Colorize; 
@@ -94,6 +95,38 @@ impl CPU {
         self.pc = self.read16(0xFFFC);
         #[cfg(debug_assertions)]
         println!("[photon] Jumping to RESV at ${:04X}", self.pc);
+    }
+
+    pub fn export_state(&self) -> State {
+        State {
+            x:         self.x,
+            y:         self.y,
+            a:         self.a,
+            dp:        self.dp,
+            db:        self.db,
+            sp:        self.sp,
+            pc:        self.pc,
+            pb:        self.pb,
+            status:    self.status,
+            emulation: self.emulation,
+        }
+    }
+
+    pub fn import_state(&mut self, state: State) {
+        self.x = state.x;
+        self.y = state.y;
+        self.a = state.a;
+
+        self.dp = state.dp;
+        self.db = state.db;
+
+        self.sp = state.sp;
+
+        self.pc = state.pc;
+        self.pb = state.pb;
+
+        self.status = state.status;
+        self.emulation = state.emulation;
     }
 
     fn acc_size(&self) -> u8 { if self.status.m { 1 } else { 2 } }
