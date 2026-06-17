@@ -43,6 +43,8 @@ pub struct CPU {
 
     // Helpers
     ready_counter: i16, // Cycles until ready for next instruction
+    nmi_pending: bool,
+    irq_pending: bool,
     memory_read: Box<dyn Fn(u32) -> u8>,
     memory_write: Box<dyn Fn(u32, u8)>,
 }
@@ -63,6 +65,9 @@ impl CPU {
             status: Status { n: false, v: false, m: true, x: true, d: false, i: true, z: false, c: true },
             emulation: true,
             
+            nmi_pending: false,
+            irq_pending: false,
+
             memory_read: Box::new(|addr| panic!("mem_read not set: {:06X}", addr)),
             memory_write: Box::new(|addr, val| panic!("mem_write not set: {:06X} = {:02X}", addr, val)),
         };
@@ -127,6 +132,14 @@ impl CPU {
 
         self.status = state.status;
         self.emulation = state.emulation;
+    }
+
+    pub fn set_irq(&mut self, value: bool) {
+        self.irq_pending = value;
+    }
+
+    pub fn request_nmi(&mut self) {
+        self.nmi_pending = true;
     }
 
     fn acc_size(&self) -> u8 { if self.status.m { 1 } else { 2 } }
@@ -219,7 +232,6 @@ impl CPU {
         }
     }
 
-    #[allow(dead_code)] // Remove once used
     fn set_emulation(&mut self, mode: bool) {
         self.emulation = mode;
         if mode {
@@ -322,6 +334,36 @@ impl CPU {
     }
 
     /*
+     * Service an IRQ
+     */
+    fn service_irq(&mut self) {
+        self.push8(self.pb);            // Push Program Bank
+        self.push16(self.pc);           // Push Program Counter
+        self.push8(self.status.pack()); // Push Processor Status
+
+        self.status.i = true;           // Block interrups
+        self.status.d = false;          // Turn off decimal mode
+
+        self.pb = 0;                    // Goto bank 0
+        self.pc = self.read16(0xFFFE)
+    }
+
+    /*
+     * Service an NMI
+     */
+    fn service_nmi(&mut self) {
+        self.push8(self.pb);            // Push Program Bank
+        self.push16(self.pc);           // Push Program Counter
+        self.push8(self.status.pack()); // Push Processor Status
+
+        self.status.i = true;           // Block interrups
+        self.status.d = false;          // Turn off decimal mode
+
+        self.pb = 0;                    // Goto bank 0
+        self.pc = self.read16(0xFFFA)
+    }
+
+    /*
      * Step through an instruction
      */
     pub fn step(&mut self) -> u64 {
@@ -349,6 +391,14 @@ impl CPU {
         }
         if self.ready_counter < 0 {
             return;
+        }
+
+        if self.nmi_pending {
+            self.service_nmi();
+            self.nmi_pending = false;
+        } else if self.irq_pending && !self.status.i {
+            self.service_irq();
+            self.irq_pending = false;
         }
 
         let opcode = self.fetch8();

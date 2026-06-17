@@ -431,18 +431,22 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
         Instruction::RTI => {
             let p = s.pop8();
             let pcret = s.pop16();
+            let pbret = s.pop8();
 
             s.status.unpack(p);
             s.pc = pcret.wrapping_add(1);
+            s.pb = pbret;
         },
 
         // --- System ---
         Instruction::BRK => {
-            let irqb = s.read16(0xFFFE);
+            let irqb: u16 = s.read16(0xFFFE);
             
+            let pbret = s.pb;
             let pcret = s.pc.wrapping_sub(1);
             let p = s.status.pack();
 
+            s.push8(pbret);
             s.push16(pcret);
             s.push8(p);
             s.pc = irqb;
