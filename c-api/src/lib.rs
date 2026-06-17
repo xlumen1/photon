@@ -105,9 +105,7 @@ pub extern "C" fn p816ImportState(cpu: *mut CPU, state: State) {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn p816Reset(cpu: *mut CPU) {
-    if cpu.is_null() {
-        return;
-    }
+    assert!(!cpu.is_null(), "cpu pointer is null");
 
     let cpu_ref = unsafe { &mut *cpu };
     cpu_ref.reset();
@@ -115,9 +113,7 @@ pub extern "C" fn p816Reset(cpu: *mut CPU) {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn p816IsHalted(cpu: *const CPU) -> u8 {
-    if cpu.is_null() {
-        return 0;
-    }
+    assert!(!cpu.is_null(), "cpu pointer is null");
 
     let cpu_ref = unsafe { &*cpu };
     if cpu_ref.is_halted() { 1 } else { 0 }
@@ -125,10 +121,24 @@ pub extern "C" fn p816IsHalted(cpu: *const CPU) -> u8 {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn p816IsReady(cpu: *const CPU) -> u8 {
-    if cpu.is_null() {
-        return 0;
-    }
+    assert!(!cpu.is_null(), "cpu pointer is null");
 
     let cpu_ref = unsafe { &*cpu };
     if cpu_ref.is_ready() { 1 } else { 0 }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn p816RequestNMI(cpu: *mut CPU) {
+    assert!(!cpu.is_null(), "cpu pointer is null");
+
+    let cpu_ref = unsafe { &mut *cpu };
+    cpu_ref.request_nmi();
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn p816SetIRQ(cpu: *mut CPU, mode: bool) {
+    assert!(!cpu.is_null(), "cpu pointer is null");
+
+    let cpu_ref = unsafe { &mut *cpu };
+    cpu_ref.set_irq(mode);
 }
