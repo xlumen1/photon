@@ -1,5 +1,7 @@
 mod exec;
 mod addr;
+mod helpers;
+mod memio;
 
 use crate::{State, aux::{Operand, Status, Width}, op::{AddressingMode, OPCODES}};
 
@@ -93,11 +95,11 @@ impl CPU {
     }
 
     pub fn reset(&mut self) {
-        self.set_emulation(true);
+        helpers::set_emulation(self, true);
 
         self.ready_counter = 0; // Set ready
         self.pb = 0;
-        self.pc = self.read16(0xFFFC);
+        self.pc = memio::read16(self, 0xFFFC);
         #[cfg(debug_assertions)]
         println!("[photon] Jumping to RESV at ${:04X}", self.pc);
     }
@@ -142,228 +144,7 @@ impl CPU {
         self.nmi_pending = true;
     }
 
-    fn acc_size(&self) -> u8 { if self.status.m { 1 } else { 2 } }
-
-    fn idx_size(&self) -> u8 { if self.status.x { 1 } else { 2 } }
-
-    fn inst_cycles(&mut self, cycles: i16) {
-        self.ready_counter += cycles;
-    }
-
-    fn resolve_value(&mut self, operand: &Operand, width: Width) -> u16 {
-        match *operand {
-            Operand::Immediate(v) => v,
-            Operand::Address(addr) => {
-                match width {
-                    Width::ACC => {
-                        if self.acc_size() == 1 {
-                            self.read8(addr) as u16
-                        } else {
-                            self.read16(addr)
-                        }
-                    },
-                    Width::IDX => {
-                        if self.idx_size() == 1 {
-                            self.read8(addr) as u16
-                        } else {
-                            self.read16(addr)
-                        }
-                    },
-                    Width::U16 => { self.read16(addr) },
-                    Width::U8 => { self.read8(addr) as u16 },
-                }
-            }
-            Operand::None => {
-                match width {
-                    Width::ACC => { self.a },
-                    Width::IDX => { self.x },
-                    _ => panic!("Tried to resolve value for Operand::None, but width was invalid"),
-                }
-            }
-            Operand::Relative(_) => {
-                panic!("Tried to resolve value Operand::Relative");
-            }
-            Operand::Block { src_bank: _, dst_bank: _ } => {
-                panic!("Tried to resolve value Operand::Block")
-            },
-        }
-    }
-
-    fn resolve_store(&mut self, operand: &Operand, value: u16, width: Width) {
-        match operand {
-            Operand::Address(addr) => {
-                // Memory write
-                match width {
-                    Width::ACC => {
-                        if self.acc_size() == 1 {
-                            self.write8(*addr, value as u8);
-                        } else {
-                            self.write16(*addr, value);
-                        }
-                    },
-                    Width::IDX => {
-                        if self.idx_size() == 1 {
-                            self.write8(*addr, value as u8);
-                        } else {
-                            self.write16(*addr, value);
-                        }
-                    },
-                    Width::U8 => {
-                        self.write8(*addr, value as u8);
-                    },
-                    Width::U16 => {
-                        self.write16(*addr, value);
-                    },
-                }
-            }
-            Operand::None => {
-                // Register write
-                match width {
-                    Width::ACC => {
-                        self.a = value;
-                    },
-                    Width::IDX => {
-                        self.x = value;
-                    },
-                    _ => panic!("Tried to resolve store for Operand::None with invalid width"),
-                }
-            }
-            _ => panic!("Store requires address operand or none operand with valid width"),
-        }
-    }
-
-    fn set_emulation(&mut self, mode: bool) {
-        self.emulation = mode;
-        if mode {
-            let lo: u16 = (self.sp & 0x00FF) as u16;
-            self.sp = 0x0100u16 | (lo & 0x00FF);
-        }
-    }
-
     /**
-     * Write 8 bits to an address
-     */
-    fn write8(&mut self, addr: u32, value: u8) {
-        (self.memory_write)(addr, value);
-    }
-
-    /**
-     * Write 16 bits to an address
-     */
-    fn write16(&mut self, addr: u32, value: u16) {
-        self.write8(addr, (value & 0xFF) as u8);
-        self.write8(addr.wrapping_add(1), ((value >> 8) & 0xFF) as u8);
-    }
-
-    /**
-     * Fetch 8 bits from program counter location
-     */
-    fn fetch8(&mut self) -> u8 {
-        let addr= ((self.pb as u32) << 16) | self.pc as u32;
-        self.pc = self.pc.wrapping_add(1);
-        (self.memory_read)(addr)
-    }
-
-    /**
-     * Fetch 16 bits from program counter location
-     */
-    fn fetch16(&mut self) -> u16 {
-        let addr_lo = ((self.pb as u32) << 16) | self.pc as u32;
-        let addr_hi = ((self.pb as u32) << 16) | (self.pc.wrapping_add(1) as u32);
-        self.pc = self.pc.wrapping_add(2);
-        let lo = (self.memory_read)(addr_lo) as u16;
-        let hi = (self.memory_read)(addr_hi) as u16;
-
-        lo | (hi << 8)
-    }
-
-    fn push8(&mut self, value: u8) {
-        let addr = (0x00u32 << 16) | (self.sp as u32);
-        (self.memory_write)(addr, value);
-
-        if self.emulation {
-            let lo = (self.sp & 0x00FF).wrapping_sub(1) & 0x00FF;
-            self.sp = 0x0100 | lo;
-        } else {
-            self.sp = self.sp.wrapping_sub(1);
-        }
-    }
-
-    fn push16(&mut self, value: u16) {
-        // high -> low
-        let hi = (value >> 8) as u8;
-        let lo = (value & 0xFF) as u8;
-
-        self.push8(hi);
-        self.push8(lo);
-    }
-
-    fn pop8(&mut self) -> u8 {
-        if self.emulation {
-            let lo = (self.sp & 0x00FF).wrapping_add(1) & 0x00FF;
-            self.sp = 0x0100 | lo;
-        } else {
-            self.sp = self.sp.wrapping_add(1);
-        }
-        let addr = (0x00u32 << 16) | (self.sp as u32);
-        self.read8(addr)
-    }
-
-    fn pop16(&mut self) -> u16 {
-        let lo = self.pop8() as u16;
-        let hi = self.pop8() as u16;
-        (hi << 8) | lo
-    }
-
-    fn read8(&self, addr: u32) -> u8 { (self.memory_read)(addr) }
-    fn read16(&self, addr: u32) -> u16 {
-        let lo = self.read8(addr) as u16;
-        let hi = self.read8(addr + 1) as u16;
-        lo | (hi << 8)
-    }
-
-    fn branch(&mut self, op: Operand, cond: bool) {
-        if cond {
-            self.inst_cycles(1); // Was missing
-            let target = match op {
-                Operand::Relative(t) => t as u16,
-                _ => panic!("Branch expects relative operand")
-            };
-            self.pc = target
-        }
-    }
-
-    /*
-     * Service an IRQ
-     */
-    fn service_irq(&mut self) {
-        self.push8(self.pb);            // Push Program Bank
-        self.push16(self.pc);           // Push Program Counter
-        self.push8(self.status.pack()); // Push Processor Status
-
-        self.status.i = true;           // Block interrups
-        self.status.d = false;          // Turn off decimal mode
-
-        self.pb = 0;                    // Goto bank 0
-        self.pc = self.read16(0xFFFE)
-    }
-
-    /*
-     * Service an NMI
-     */
-    fn service_nmi(&mut self) {
-        self.push8(self.pb);            // Push Program Bank
-        self.push16(self.pc);           // Push Program Counter
-        self.push8(self.status.pack()); // Push Processor Status
-
-        self.status.i = true;           // Block interrups
-        self.status.d = false;          // Turn off decimal mode
-
-        self.pb = 0;                    // Goto bank 0
-        self.pc = self.read16(0xFFFA)
-    }
-
-    /*
      * Step through an instruction
      */
     pub fn step(&mut self) -> u64 {
@@ -394,19 +175,19 @@ impl CPU {
         }
 
         if self.nmi_pending {
-            self.service_nmi();
+            helpers::service_nmi(self);
             self.nmi_pending = false;
         } else if self.irq_pending && !self.status.i {
-            self.service_irq();
+            helpers::service_irq(self);
             self.irq_pending = false;
         }
 
-        let opcode = self.fetch8();
+        let opcode = memio::fetch8(self);
         #[cfg(debug_assertions)]
         let source = self.pc as u32 - 1 + ((self.pb as u32) << 16);
         let op = &OPCODES[opcode as usize];
 
-        self.inst_cycles(op.cycles as i16);
+        helpers::inst_cycles(self, op.cycles as i16);
 
         let operand = match op.mode {
             AddressingMode::Absolute            => addr::addr_abs(self),
@@ -449,26 +230,5 @@ impl CPU {
 
         exec::execute(self, op.instr, operand);
 
-    }
-
-    /**
-     * Set the zero and negative flags based on a value
-     */
-    fn set_zn(&mut self, value: u16, width: Width) {
-        let size = match width {
-            Width::U8  => 1,
-            Width::U16 => 2,
-            Width::ACC => self.acc_size(),
-            Width::IDX => self.idx_size(),
-        } as usize;
-        
-        let (mask, nmask) = if size == 1 {
-            (0x00FFu16, 0x0080u16)
-        } else {
-            (0xFFFFu16, 0x8000u16)
-        };
-
-        self.status.z = (value & mask) == 0;
-        self.status.n = (value & nmask) != 0;
     }
 }
