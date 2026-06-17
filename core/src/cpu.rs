@@ -3,7 +3,8 @@ mod addr;
 mod helpers;
 mod memio;
 
-use crate::{State, aux::{Operand, Status, Width}, op::{AddressingMode, OPCODES}};
+use crate::{State, aux::{Operand, Status, Width}, op::OPCODES};
+pub use addr::AddressingMode;
 
 #[cfg(debug_assertions)]
 use colored::Colorize; 

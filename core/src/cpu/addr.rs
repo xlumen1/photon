@@ -1,5 +1,71 @@
 use crate::aux::Operand;
 use super::{CPU, helpers, memio};
+
+#[derive(Copy, Clone)]
+pub enum AddressingMode {
+//  NAME                    SHORTHAND(S)
+    Absolute,            // a
+    AbsoluteIndirectX,   // (a,x)
+    AbsoluteX,           // a,x
+    AbsoluteY,           // a,y
+    AbsoluteIndirect,    // (a)
+    AbsoluteLongX,       // al,x
+    AbsoluteLong,        // al
+    BlockMove,           // xyc
+    DirectIndirectX,     // (d,x)
+    DirectX,             // d,x
+    DirectY,             // d,y
+    DirectIndirectY,     // (d),y
+    DirectIndirectLongY, // [d],y
+    DirectIndirectLong,  // [d]
+    DirectIndirect,      // (d)
+    Direct,              // d
+    ImmediateAcc,        // #
+    ImmediateIdx,        // #
+    ImmediateByte,       // #
+    ImmediateWord,       // #
+    Implied,             // i
+    RelativeLong,        // rl
+    Relative,            // r
+    Stack,               // s
+    StackRelative,       // d,s
+    StackRelativeY,      // (d,s),y
+}
+
+impl AddressingMode {
+    #[cfg(debug_assertions)]
+    pub fn as_str(self) -> &'static str {
+        match self {
+            AddressingMode::Absolute            => "Absolute",
+            AddressingMode::AbsoluteIndirectX   => "AbsoluteIndirectX",
+            AddressingMode::AbsoluteX           => "AbsoluteX",
+            AddressingMode::AbsoluteY           => "AbsoluteY",
+            AddressingMode::AbsoluteIndirect    => "AbsoluteIndirect",
+            AddressingMode::AbsoluteLongX       => "AbsoluteLongX",
+            AddressingMode::AbsoluteLong        => "AbsoluteLong",
+            AddressingMode::BlockMove           => "BlockMove",
+            AddressingMode::DirectIndirectX     => "DirectIndirectX",
+            AddressingMode::DirectX             => "DirectX",
+            AddressingMode::DirectY             => "DirectY",
+            AddressingMode::DirectIndirectY     => "DirectIndirectY",
+            AddressingMode::DirectIndirectLongY => "DirectIndirectLongY",
+            AddressingMode::DirectIndirectLong  => "DirectIndirectLong",
+            AddressingMode::DirectIndirect      => "DirectIndirect",
+            AddressingMode::Direct              => "Direct",
+            AddressingMode::ImmediateAcc        => "ImmediateAcc",
+            AddressingMode::ImmediateIdx        => "ImmediateIdx",
+            AddressingMode::ImmediateByte       => "ImmediateByte",
+            AddressingMode::ImmediateWord       => "ImmediateWord",
+            AddressingMode::Implied             => "Implied",
+            AddressingMode::Stack               => "Stack",
+            AddressingMode::RelativeLong        => "RelativeLong",
+            AddressingMode::Relative            => "Relative",
+            AddressingMode::StackRelative       => "StackRelative",
+            AddressingMode::StackRelativeY      => "StackRelativeY",
+        }
+    }
+}
+
 /*
 // Immediate Addressing
 
