@@ -2,9 +2,11 @@ mod exec;
 mod addr;
 mod helpers;
 mod memio;
+mod status;
 
-use crate::{State, aux::{Operand, Status, Width}, op::OPCODES};
+use crate::{state::State, aux::{Operand, Width}, op::OPCODES};
 pub use addr::AddressingMode;
+pub use status::Status;
 
 #[cfg(debug_assertions)]
 use colored::Colorize; 
