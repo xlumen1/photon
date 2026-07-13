@@ -1,0 +1,43 @@
+name: Build Photon
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main]
+
+jobs:
+  build:
+    name: ${{ matrix.os }} - ${{ matrix.build_type }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        build_type: [release, debug]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust Toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Build
+        run: |
+          cargo build ${{ case(matrix.build_type == 'debug', '--debug', '') }}
+          
+      - name: Upload Artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: photon.${{ matrix.os }}.${{ matrix.build_type }}.bundle
+          path: |
+            c-api/include
+            target/${{ matrix.build_type }}/*.rlib
+            target/${{ matrix.build_type }}/*.so
+            target/${{ matrix.build_type }}/*.a
+            target/${{ matrix.build_type }}/*.dll
+            target/${{ matrix.build_type }}/*.lib
+            target/${{ matrix.build_type }}/*.dylib
