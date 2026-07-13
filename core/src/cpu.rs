@@ -4,7 +4,7 @@ mod helpers;
 mod memio;
 mod status;
 
-use crate::{state::State, aux::{Operand, Width}, op::OPCODES};
+use crate::{state::State, width::Width, operand::Operand, op::OPCODES};
 pub use addr::AddressingMode;
 pub use status::Status;
 
