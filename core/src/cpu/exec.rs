@@ -1,4 +1,4 @@
-use crate::{aux::{Operand, Width}, op::{Instruction}};
+use crate::{operand::Operand, width::Width, op::{Instruction}};
 use super::{CPU, helpers, memio};
 
 /**

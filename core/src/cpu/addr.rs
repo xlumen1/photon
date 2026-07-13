@@ -1,4 +1,4 @@
-use crate::aux::Operand;
+use crate::operand::Operand;
 use super::{CPU, helpers, memio};
 
 #[derive(Copy, Clone)]
