@@ -75,7 +75,7 @@ pub(super) fn addr_abs(s: &mut CPU) -> Operand {
 pub(super) fn addr_abs_ind_x(s: &mut CPU) -> Operand {
     let ptr = memio::fetch16(s) as u32;
 
-    let addr = memio::read16(s, ptr) as u32;
+    let addr = memio::read16(s, ptr as usize) as u32;
     let b = (s.db as u32) << 16;
     Operand::Address((addr + b).wrapping_add(s.x as u32))
 }
@@ -97,7 +97,7 @@ pub(super) fn addr_abs_y(s: &mut CPU) -> Operand {
 pub(super) fn addr_abs_ind(s: &mut CPU) -> Operand {
     let ptr = memio::fetch16(s) as u32;
 
-    let addr = memio::read16(s, ptr) as u32;
+    let addr = memio::read16(s, ptr as usize) as u32;
     let b = (s.db as u32) << 16;
     Operand::Address(addr + b)
 }

@@ -42,7 +42,7 @@ pub extern "C" fn p816SetCallbacks(cpu: *mut CPU, read_cb: MemReadCb, write_cb: 
     assert!(!cpu.is_null(), "cpu pointer is null");
     let cpu_ref: &mut CPU = unsafe { &mut *cpu };
     
-    cpu_ref.set_memory_callbacks(Box::new(move |addr| read_cb(addr)), Box::new(move |addr, val| write_cb(addr, val)));
+    cpu_ref.set_memory_callbacks(Box::new(move |addr| read_cb(addr as u32)), Box::new(move |addr, val| write_cb(addr as u32, val)));
 }
 
 #[unsafe(no_mangle)]

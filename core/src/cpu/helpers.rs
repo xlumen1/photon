@@ -15,20 +15,20 @@ pub(super) fn resolve_value(s: &mut CPU, operand: &Operand, width: Width) -> u16
             match width {
                 Width::ACC => {
                     if acc_size(s) == 1 {
-                        memio::read8(s, addr) as u16
+                        memio::read8(s, addr as usize) as u16
                     } else {
-                        memio::read16(s, addr)
+                        memio::read16(s, addr as usize)
                     }
                 },
                 Width::IDX => {
                     if idx_size(s) == 1 {
-                        memio::read8(s, addr) as u16
+                        memio::read8(s, addr as usize) as u16
                     } else {
-                        memio::read16(s, addr)
+                        memio::read16(s, addr as usize)
                     }
                 },
-                Width::U16 => { memio::read16(s, addr) },
-                Width::U8 => { memio::read8(s, addr) as u16 },
+                Width::U16 => { memio::read16(s, addr as usize) },
+                Width::U8 => { memio::read8(s, addr as usize) as u16 },
             }
         }
         Operand::None => {
@@ -53,23 +53,23 @@ pub(super) fn resolve_store(s: &mut CPU, operand: &Operand, value: u16, width: W
             match width {
                 Width::ACC => {
                     if acc_size(s) == 1 {
-                        memio::write8(s, *addr, value as u8);
+                        memio::write8(s, *addr as usize, value as u8);
                     } else {
-                        memio::write16(s, *addr, value);
+                        memio::write16(s, *addr as usize, value);
                     }
                 },
                 Width::IDX => {
                     if idx_size(s) == 1 {
-                        memio::write8(s, *addr, value as u8);
+                        memio::write8(s, *addr as usize, value as u8);
                     } else {
-                        memio::write16(s, *addr, value);
+                        memio::write16(s, *addr as usize, value);
                     }
                 },
                 Width::U8 => {
-                    memio::write8(s, *addr, value as u8);
+                    memio::write8(s, *addr as usize, value as u8);
                 },
                 Width::U16 => {
-                    memio::write16(s, *addr, value);
+                    memio::write16(s, *addr as usize, value);
                 },
             }
         }

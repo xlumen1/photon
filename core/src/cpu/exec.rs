@@ -79,8 +79,8 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
                     loop {
                         let src_addr = ((src_bank as u32) << 16) | (s.x as u32);
                         let dst_addr = ((dst_bank as u32) << 16) | (s.y as u32);
-                        let value = memio::read8(s, src_addr);
-                        memio::write8(s, dst_addr, value);
+                        let value = memio::read8(s, src_addr as usize);
+                        memio::write8(s, dst_addr as usize, value);
                         s.x = s.x.wrapping_add(1);
                         s.y = s.y.wrapping_add(1);
                         s.a = s.a.wrapping_sub(1);
@@ -99,8 +99,8 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
                     loop {
                         let src_addr = ((src_bank as u32) << 16) | (s.x as u32);
                         let dst_addr = ((dst_bank as u32) << 16) | (s.y as u32);
-                        let value = memio::read8(s, src_addr);
-                        memio::write8(s, dst_addr, value);
+                        let value = memio::read8(s, src_addr as usize);
+                        memio::write8(s, dst_addr as usize, value);
                         s.x = s.x.wrapping_sub(1);
                         s.y = s.y.wrapping_sub(1);
                         s.a = s.a.wrapping_sub(1);
@@ -246,9 +246,9 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
             match op {
                 Operand::Address(a) => {
                     if wid == 8 {
-                        memio::write8(s, a, val as u8);
+                        memio::write8(s, a as usize, val as u8);
                     } else {
-                        memio::write16(s, a, val);
+                        memio::write16(s, a as usize, val);
                     }
                 }
                 _ => {
@@ -303,9 +303,9 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
             match op {
                 Operand::Address(a) => {
                     if wid == 8 {
-                        memio::write8(s, a, val as u8);
+                        memio::write8(s, a as usize, val as u8);
                     } else {
-                        memio::write16(s, a, val);
+                        memio::write16(s, a as usize, val);
                     }
                 }
                 _ => s.a = val,
@@ -337,9 +337,9 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
             match op {
                 Operand::Address(a) => {
                     if wid == 8 {
-                        memio::write8(s, a, val as u8);
+                        memio::write8(s, a as usize, val as u8);
                     } else {
-                        memio::write16(s, a, val);
+                        memio::write16(s, a as usize, val);
                     }
                 }
                 _ => s.a = val,

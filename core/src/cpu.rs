@@ -50,8 +50,8 @@ pub struct CPU {
     ready_counter: i16, // Cycles until ready for next instruction
     nmi_pending: bool,
     irq_pending: bool,
-    memory_read: Box<dyn Fn(u32) -> u8>,
-    memory_write: Box<dyn Fn(u32, u8)>,
+    memory_read: Box<dyn Fn(usize) -> u8>,
+    memory_write: Box<dyn Fn(usize, u8)>,
 }
 
 impl CPU {
@@ -82,8 +82,8 @@ impl CPU {
 
     pub fn set_memory_callbacks<F, G>(&mut self, read: F, write: G)
     where
-        F: 'static + Fn(u32) -> u8,
-        G: 'static + Fn(u32, u8),
+        F: 'static + Fn(usize) -> u8,
+        G: 'static + Fn(usize, u8),
     {
         self.memory_read = Box::new(read);
         self.memory_write = Box::new(write);
