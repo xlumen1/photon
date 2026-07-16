@@ -3,5 +3,10 @@ name = "emu-base"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name="photon-example"
+path = "src/main.rs"
+doc = false
+
 [dependencies]
-photon = { path = "../core" }
+photon65 = { path = "../core" }

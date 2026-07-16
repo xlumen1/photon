@@ -1,4 +1,4 @@
-use photon::CPU;
+use photon65::CPU;
 use std::{env, fs};
 
 static mut CPU_RAM: [u8; 32768] = [0; 32768];

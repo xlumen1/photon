@@ -1,4 +1,4 @@
-use photon::CPU;
+use photon65::CPU;
 
 pub type MemReadCb = extern "C" fn(addr: u32) -> u8;
 pub type MemWriteCb = extern "C" fn(addr: u32, val: u8);
