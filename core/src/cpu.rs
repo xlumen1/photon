@@ -6,6 +6,7 @@ mod status;
 mod op;
 mod width;
 mod operand;
+mod vector;
 
 use crate::{state::State};
 pub use addr::AddressingMode;
@@ -103,11 +104,13 @@ impl CPU {
     pub fn reset(&mut self) {
         helpers::set_emulation(self, true);
 
+        let addr = vector::get_vector(self, vector::Vector::RESETB);
+
         self.ready_counter = 0; // Set ready
         self.pb = 0;
-        self.pc = memio::read16(self, 0xFFFC);
+        self.pc = memio::read16(self, addr);
         #[cfg(debug_assertions)]
-        println!("[photon] Jumping to RESV at ${:04X}", self.pc);
+        println!("[photon] Jumping to RESETB at ${:04X}", self.pc);
     }
 
     pub fn export_state(&self) -> State {

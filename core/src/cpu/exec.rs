@@ -1,3 +1,5 @@
+use crate::cpu::vector;
+
 use super::{CPU, helpers, memio, op::Instruction, operand::Operand, width::Width};
 
 /**
@@ -439,7 +441,8 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
 
         // --- System ---
         Instruction::BRK => {
-            let irqb: u16 = memio::read16(s, 0xFFFE);
+            let addr = vector::get_vector(s, vector::Vector::BRK);
+            let irqb = memio::read16(s, addr);
             
             let pbret = s.pb;
             let pcret = s.pc.wrapping_sub(1);

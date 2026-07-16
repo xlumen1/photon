@@ -1,4 +1,4 @@
-use super::{CPU, width::Width, operand::Operand, memio};
+use super::{CPU, width::Width, operand::Operand, memio, vector};
 
 pub(super) fn acc_size(s: &mut CPU) -> u8 { if s.status.m { 1 } else { 2 } }
 
@@ -113,6 +113,8 @@ pub(super) fn branch(s: &mut CPU, op: Operand, cond: bool) {
  * Service an IRQ
  */
 pub(super) fn service_irq(s: &mut CPU) {
+    let addr = vector::get_vector(s, vector::Vector::IRQB);
+
     memio::push8(s, s.pb);            // Push Program Bank
     memio::push16(s, s.pc);           // Push Program Counter
     memio::push8(s, s.status.pack()); // Push Processor Status
@@ -121,13 +123,15 @@ pub(super) fn service_irq(s: &mut CPU) {
     s.status.d = false;          // Turn off decimal mode
 
     s.pb = 0;                    // Goto bank 0
-    s.pc = memio::read16(s, 0xFFFE)
+    s.pc = memio::read16(s, addr)
 }
 
 /*
  * Service an NMI
  */
 pub(super) fn service_nmi(s: &mut CPU) {
+    let addr = vector::get_vector(s, vector::Vector::NMIB);
+
     memio::push8(s, s.pb);            // Push Program Bank
     memio::push16(s, s.pc);           // Push Program Counter
     memio::push8(s, s.status.pack()); // Push Processor Status
@@ -136,7 +140,7 @@ pub(super) fn service_nmi(s: &mut CPU) {
     s.status.d = false;          // Turn off decimal mode
 
     s.pb = 0;                    // Goto bank 0
-    s.pc = memio::read16(s, 0xFFFA)
+    s.pc = memio::read16(s, addr)
 }
 
 /**
