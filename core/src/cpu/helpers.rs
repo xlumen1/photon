@@ -167,6 +167,7 @@ pub(super) fn set_zn(s: &mut CPU, value: u16, width: Width) {
 /**
  * Convert BCD value to binary value
  */
+#[allow(unused)]
 pub(super) fn convert_to_bin(value: u16) -> u16 {
     let d0 = value & 15; 
     let d1 = (value >> 4) & 15;
@@ -179,6 +180,7 @@ pub(super) fn convert_to_bin(value: u16) -> u16 {
 /**
  * Convert binary value to BCD
  */
+#[allow(unused)]
 pub(super) fn convert_to_bcd(value: u16) -> u16 {
     let mut v = value;
     let d0 = v % 10;

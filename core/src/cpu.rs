@@ -12,6 +12,7 @@ use crate::{state::State};
 pub use addr::AddressingMode;
 pub use status::Status;
 #[cfg(debug_assertions)]
+#[allow(unused)]
 pub(crate) use op::{Instruction, MAPPINGS};
 
 #[cfg(debug_assertions)]

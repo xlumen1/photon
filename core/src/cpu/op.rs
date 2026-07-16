@@ -197,7 +197,7 @@ impl Instruction {
         }
     }
 
-    #[cfg(debug_assertions)]
+    #[allow(unused)]
     pub fn opcodes(&self) -> Vec<u8> {
         MAPPINGS.iter()
                 .filter(|(instr,_)| std::mem::discriminant(instr) == std::mem::discriminant(self))
@@ -232,7 +232,7 @@ macro_rules! generate_table {
             table
         };
 
-        #[cfg(debug_assertions)]
+        #[allow(unused)]
         pub const MAPPINGS: &[(Instruction, &[u8])] = &[
             $(
                 (Instruction::$instr, &[$code]),

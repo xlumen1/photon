@@ -1,5 +1,6 @@
 use super::{CPU};
 
+#[allow(unused)]
 pub enum Vector {
     Irqb,
     Brk,
