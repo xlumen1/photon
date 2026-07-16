@@ -8,73 +8,73 @@ use super::{CPU, helpers, memio, op::Instruction, operand::Operand, width::Width
 pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
     match instr {
         // --- Load/Store ---
-        Instruction::LDA => { let val = helpers::resolve_value(s, &op, Width::ACC); s.a = val; helpers::set_zn(s, val, Width::ACC); },
-        Instruction::LDX => { let val = helpers::resolve_value(s, &op, Width::IDX); s.x = val; helpers::set_zn(s, val, Width::IDX); },
-        Instruction::LDY => { let val = helpers::resolve_value(s, &op, Width::IDX); s.y = val; helpers::set_zn(s, val, Width::IDX); },
+        Instruction::Lda => { let val = helpers::resolve_value(s, &op, Width::Acc); s.a = val; helpers::set_zn(s, val, Width::Acc); },
+        Instruction::Ldx => { let val = helpers::resolve_value(s, &op, Width::Idx); s.x = val; helpers::set_zn(s, val, Width::Idx); },
+        Instruction::Ldy => { let val = helpers::resolve_value(s, &op, Width::Idx); s.y = val; helpers::set_zn(s, val, Width::Idx); },
     
-        Instruction::STA => helpers::resolve_store(s, &op, s.a, Width::ACC),
-        Instruction::STX => helpers::resolve_store(s, &op, s.x, Width::IDX),
-        Instruction::STY => helpers::resolve_store(s, &op, s.y, Width::IDX),
-        Instruction::STZ => helpers::resolve_store(s, &op, 0, Width::ACC),
+        Instruction::Sta => helpers::resolve_store(s, &op, s.a, Width::Acc),
+        Instruction::Stx => helpers::resolve_store(s, &op, s.x, Width::Idx),
+        Instruction::Sty => helpers::resolve_store(s, &op, s.y, Width::Idx),
+        Instruction::Stz => helpers::resolve_store(s, &op, 0, Width::Acc),
         // --- Transfers ---
-        Instruction::TAX => {
+        Instruction::Tax => {
             s.x = if s.status.x { s.a & 0xFF } else { s.a };
-            helpers::set_zn(s, s.x, Width::IDX);
+            helpers::set_zn(s, s.x, Width::Idx);
         },
-        Instruction::TAY => {
+        Instruction::Tay => {
             s.y = if s.status.x { s.a & 0xFF } else { s.a };
-            helpers::set_zn(s, s.y, Width::IDX);
+            helpers::set_zn(s, s.y, Width::Idx);
         },
-        Instruction::TXA => {
+        Instruction::Txa => {
             s.a = if s.status.m { s.x & 0xFF } else { s.x };
-            helpers::set_zn(s, s.a, Width::ACC);
+            helpers::set_zn(s, s.a, Width::Acc);
         },
-        Instruction::TYA => {
+        Instruction::Tya => {
             s.a = if s.status.m { s.y & 0xFF } else { s.y };
-            helpers::set_zn(s, s.a, Width::ACC);
+            helpers::set_zn(s, s.a, Width::Acc);
         },
-        Instruction::TSX => {
+        Instruction::Tsx => {
             s.x = if s.status.x { s.sp & 0xFF } else { s.sp };
-            helpers::set_zn(s, s.x, Width::IDX);
+            helpers::set_zn(s, s.x, Width::Idx);
         },
-        Instruction::TXS => {
+        Instruction::Txs => {
             s.sp = if s.emulation {
                 0x0100 | (s.x & 0xFF)
             } else {
                 s.x
             };
         },
-        Instruction::TXY => {
+        Instruction::Txy => {
             s.y = s.x;
         },
-        Instruction::TYX => {
+        Instruction::Tyx => {
             s.x = s.y;
         }
 
-        Instruction::XBA => {
-            s.a = (s.a << 8) | (s.a >> 8);
+        Instruction::Xba => {
+            s.a = s.a.rotate_right(8);
         },
-        Instruction::TCD => {
+        Instruction::Tcd => {
             s.dp = s.a;
-            helpers::set_zn(s, s.a, Width::ACC);
+            helpers::set_zn(s, s.a, Width::Acc);
         },
-        Instruction::TDC => {
+        Instruction::Tdc => {
             s.a = s.dp;
-            helpers::set_zn(s, s.a, Width::ACC);
+            helpers::set_zn(s, s.a, Width::Acc);
         },
-        Instruction::TCS => {
+        Instruction::Tcs => {
             s.sp = if s.emulation {
                 0x0100 | (s.a & 0xFF)
             } else {
                 s.a
             };
         },
-        Instruction::TSC => {
+        Instruction::Tsc => {
             s.a = s.sp;
-            helpers::set_zn(s, s.a, Width::ACC);
+            helpers::set_zn(s, s.a, Width::Acc);
         },
         // --- Block Transfer ---
-        Instruction::MVN => {
+        Instruction::Mvn => {
             match op {
                 Operand::Block { src_bank, dst_bank } => {
                     loop {
@@ -94,7 +94,7 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
                 _ => { println!("ILLEGAL STATE REACHED, HALTING\nThis is likely a bug with the emulator, MVN should never reach this state."); s.ready_counter = -1; },
             };
         },
-        Instruction::MVP => {
+        Instruction::Mvp => {
             match op {
                 Operand::Block { src_bank, dst_bank } => {
                     loop {
@@ -116,8 +116,8 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
         },
     
         // --- Arithmetic ---
-        Instruction::ADC => { 
-            let m = helpers::resolve_value(s, &op, Width::ACC) as u32;
+        Instruction::Adc => { 
+            let m = helpers::resolve_value(s, &op, Width::Acc) as u32;
             let carry_in = if s.status.c { 1 } else { 0 };
             let wid = if helpers::acc_size(s) == 1 { 8 } else { 16 };
             let max = (1 << wid) - 1;
@@ -127,16 +127,16 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
             let sign_mask = 1 << (wid - 1);
             s.status.v = ((!((s.a as u32) ^ m) & ((s.a as u32) ^ full)) & sign_mask) != 0;
             s.a = result;
-            helpers::set_zn(s, s.a, Width::ACC);
+            helpers::set_zn(s, s.a, Width::Acc);
         },
     
-        Instruction::SBC => {
-            let m = helpers::resolve_value(s, &op, Width::ACC) as u32;
+        Instruction::Sbc => {
+            let m = helpers::resolve_value(s, &op, Width::Acc) as u32;
             let carry_in = if s.status.c { 1 } else { 0 };
             let wid = if helpers::acc_size(s) == 1 { 8 } else { 16 };
             let max = (1 << wid) - 1;
-            let full = (s.a as i32) - (m as i32) - (1 - carry_in as i32);
-            let result = (full & max as i32) as u16;
+            let full = (s.a as i32) - (m as i32) - (1 - carry_in);
+            let result = (full & max) as u16;
             s.status.c = full >= 0;
             let sign_mask = 1 << (wid - 1);
             let a_sign = (s.a & sign_mask as u16) != 0;
@@ -144,85 +144,85 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
             let r_sign = (result & sign_mask as u16) != 0;
             s.status.v = (a_sign != m_sign) && (a_sign != r_sign);
             s.a = result;
-            helpers::set_zn(s, s.a, Width::ACC);
+            helpers::set_zn(s, s.a, Width::Acc);
         },
     
-        Instruction::CMP => { 
-            let m = helpers::resolve_value(s, &op, Width::ACC); 
+        Instruction::Cmp => { 
+            let m = helpers::resolve_value(s, &op, Width::Acc); 
             let r = s.a.wrapping_sub(m); 
             s.status.c = s.a >= m; 
-            helpers::set_zn(s, r, Width::ACC);
+            helpers::set_zn(s, r, Width::Acc);
             #[cfg(debug_assertions)]
             println!("[photon] Comparing {} - {} = {}", s.a, m, r);
         },
-        Instruction::CPX => { 
-            let m = helpers::resolve_value(s, &op, Width::IDX); 
+        Instruction::Cpx => { 
+            let m = helpers::resolve_value(s, &op, Width::Idx); 
             let r = s.x.wrapping_sub(m); 
             s.status.c = s.x >= m; 
-            helpers::set_zn(s, r, Width::IDX); 
+            helpers::set_zn(s, r, Width::Idx); 
             #[cfg(debug_assertions)]
             println!("[photon] Comparing {} - {} = {}", s.x, m, r);
         },
-        Instruction::CPY => { 
-            let m = helpers::resolve_value(s, &op, Width::IDX); 
+        Instruction::Cpy => { 
+            let m = helpers::resolve_value(s, &op, Width::Idx); 
             let r = s.y.wrapping_sub(m); 
             s.status.c = s.y >= m; 
-            helpers::set_zn(s, r, Width::IDX); 
+            helpers::set_zn(s, r, Width::Idx); 
         },
     
-        Instruction::INC => {
-            let val = helpers::resolve_value(s, &op, Width::ACC).wrapping_add(1);
-            helpers::resolve_store(s, &op, val, Width::ACC);
-            helpers::set_zn(s, val, Width::ACC);
+        Instruction::Inc => {
+            let val = helpers::resolve_value(s, &op, Width::Acc).wrapping_add(1);
+            helpers::resolve_store(s, &op, val, Width::Acc);
+            helpers::set_zn(s, val, Width::Acc);
         },
-        Instruction::DEC => {
-            let val = helpers::resolve_value(s, &op, Width::ACC).wrapping_sub(1);
-            helpers::resolve_store(s, &op, val, Width::ACC);
-            helpers::set_zn(s, val, Width::ACC);
+        Instruction::Dec => {
+            let val = helpers::resolve_value(s, &op, Width::Acc).wrapping_sub(1);
+            helpers::resolve_store(s, &op, val, Width::Acc);
+            helpers::set_zn(s, val, Width::Acc);
         },
     
-        Instruction::INX => {
+        Instruction::Inx => {
             if helpers::idx_size(s) == 1 {
                 s.x = (s.x as u8).wrapping_add(1) as u16;
             } else {
                 s.x = s.x.wrapping_add(1);
             }
-            helpers::set_zn(s, s.x, Width::IDX);
+            helpers::set_zn(s, s.x, Width::Idx);
         },
-        Instruction::DEX => {
+        Instruction::Dex => {
             if helpers::idx_size(s) == 1 {
                 s.x = (s.x as u8).wrapping_sub(1) as u16;
             } else {
                 s.x = s.x.wrapping_sub(1);
             }
-            helpers::set_zn(s, s.x, Width::IDX);
+            helpers::set_zn(s, s.x, Width::Idx);
         },
     
-        Instruction::INY => {
+        Instruction::Iny => {
             if helpers::idx_size(s) == 1 {
                 s.y = (s.y as u8).wrapping_add(1) as u16;
             } else {
                 s.y = s.y.wrapping_add(1);
             }
-            helpers::set_zn(s, s.y, Width::IDX);
+            helpers::set_zn(s, s.y, Width::Idx);
         },
-        Instruction::DEY => {
+        Instruction::Dey => {
             if helpers::idx_size(s) == 1 {
                 s.y = (s.y as u8).wrapping_sub(1) as u16;
             } else {
                 s.y = s.y.wrapping_sub(1);
             }
-            helpers::set_zn(s, s.y, Width::IDX);
+            helpers::set_zn(s, s.y, Width::Idx);
         },
     
         // --- Logical ---
-        Instruction::AND => { let val = helpers::resolve_value(s, &op, Width::ACC) & s.a; s.a = val; helpers::set_zn(s, val, Width::ACC); },
-        Instruction::ORA => { let val = helpers::resolve_value(s, &op, Width::ACC) | s.a; s.a = val; helpers::set_zn(s, val, Width::ACC); },
-        Instruction::EOR => { let val = helpers::resolve_value(s, &op, Width::ACC) ^ s.a; s.a = val; helpers::set_zn(s, val, Width::ACC); },
+        Instruction::And => { let val = helpers::resolve_value(s, &op, Width::Acc) & s.a; s.a = val; helpers::set_zn(s, val, Width::Acc); },
+        Instruction::Ora => { let val = helpers::resolve_value(s, &op, Width::Acc) | s.a; s.a = val; helpers::set_zn(s, val, Width::Acc); },
+        Instruction::Eor => { let val = helpers::resolve_value(s, &op, Width::Acc) ^ s.a; s.a = val; helpers::set_zn(s, val, Width::Acc); },
     
         // --- Shifts/Rotates ---
-        Instruction::ASL => {
-            let mut val = helpers::resolve_value(s,&op, Width::ACC);
+        Instruction::Asl => {
+            let mut val = helpers::resolve_value(s,&op, Width::Acc);
             let wid = if helpers::acc_size(s) == 1 { 8 } else { 16 };
             let carry = if wid == 8 {
                 (val & 0x80) != 0
@@ -242,7 +242,7 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
                 val &= 0xFF;
             }
         
-            helpers::set_zn(s, val, Width::ACC);
+            helpers::set_zn(s, val, Width::Acc);
         
             match op {
                 Operand::Address(a) => {
@@ -257,9 +257,9 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
                 }
             }
         },
-        Instruction::LSR => {
+        Instruction::Lsr => {
             // Fetch value
-            let mut val = helpers::resolve_value(s, &op, Width::ACC);
+            let mut val = helpers::resolve_value(s, &op, Width::Acc);
             let wid = if helpers::acc_size(s) == 1 { 8 } else { 16 };
             s.status.c = (val & 1) != 0;
             val = if wid == 8 {
@@ -273,12 +273,12 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
                 val &= 0xFF;
             }
         
-            helpers::set_zn(s, val, Width::ACC);
+            helpers::set_zn(s, val, Width::Acc);
             
-            helpers::resolve_store(s, &op, val, Width::ACC);
+            helpers::resolve_store(s, &op, val, Width::Acc);
         },
-        Instruction::ROL => {
-            let mut val = helpers::resolve_value(s, &op, Width::ACC);
+        Instruction::Rol => {
+            let mut val = helpers::resolve_value(s, &op, Width::Acc);
             let wid = if helpers::acc_size(s) == 1 { 8 } else { 16 };
             let carry_in = if s.status.c { 1 } else { 0 } as u16;
             s.status.c = if wid == 8 {
@@ -298,7 +298,7 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
                 val &= 0xFF;
             }
         
-            helpers::set_zn(s, val, Width::ACC);
+            helpers::set_zn(s, val, Width::Acc);
         
             // Write back
             match op {
@@ -312,9 +312,9 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
                 _ => s.a = val,
             }
         },
-        Instruction::ROR => {
+        Instruction::Ror => {
             // Fetch value
-            let mut val = helpers::resolve_value(s, &op, Width::ACC);
+            let mut val = helpers::resolve_value(s, &op, Width::Acc);
             let wid = if helpers::acc_size(s) == 1 { 8 } else { 16 };
         
             let carry_in = if s.status.c { 1 } else { 0 } as u16;
@@ -333,7 +333,7 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
             }
         
             // Set flags
-            helpers::set_zn(s, val, Width::ACC);
+            helpers::set_zn(s, val, Width::Acc);
         
             match op {
                 Operand::Address(a) => {
@@ -348,24 +348,24 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
         },
     
         // --- Bit test ---
-        Instruction::BIT => {
-            let val = helpers::resolve_value(s, &op, Width::ACC);
+        Instruction::Bit => {
+            let val = helpers::resolve_value(s, &op, Width::Acc);
             let r = s.a & val;
-            helpers::set_zn(s, r, Width::ACC);
+            helpers::set_zn(s, r, Width::Acc);
             s.status.v = (val & (1 << 6)) != 0;
         },
-        Instruction::TRB => {
-            let val = helpers::resolve_value(s, &op, Width::ACC);
-            helpers::set_zn(s, s.a & val, Width::ACC);
-            helpers::resolve_store(s, &op, val & !s.a, Width::ACC);
+        Instruction::Trb => {
+            let val = helpers::resolve_value(s, &op, Width::Acc);
+            helpers::set_zn(s, s.a & val, Width::Acc);
+            helpers::resolve_store(s, &op, val & !s.a, Width::Acc);
         },
-        Instruction::TSB => {
-            let val = helpers::resolve_value(s, &op, Width::ACC);
-            helpers::set_zn(s, s.a & val, Width::ACC);
-            helpers::resolve_store(s, &op, val | s.a, Width::ACC);
+        Instruction::Tsb => {
+            let val = helpers::resolve_value(s, &op, Width::Acc);
+            helpers::set_zn(s, s.a & val, Width::Acc);
+            helpers::resolve_store(s, &op, val | s.a, Width::Acc);
         },
         // --- Mode Switching ---
-        Instruction::REP => {
+        Instruction::Rep => {
             let val = helpers::resolve_value(s, &op, Width::U8) as u8;
             s.status.clear_bits(val);
             if s.emulation {
@@ -373,67 +373,67 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
                 s.status.x = true;
             }
         },
-        Instruction::SEP => {
+        Instruction::Sep => {
             let val = helpers::resolve_value(s, &op, Width::U8) as u8;
             s.status.set_bits(val);
 
             if val & 0x10 != 0 {
-                s.x &= 0x00FF as u16;
-                s.y &= 0x00FF as u16;
+                s.x &= 0x00FF_u16;
+                s.y &= 0x00FF_u16;
             }
             if val & 0x20 != 0 {
-                s.a &= 0x0FF as u16;
+                s.a &= 0x0FF_u16;
             }
         },
     
         // --- Branches ---
-        Instruction::BEQ => helpers::branch(s, op, s.status.z),
-        Instruction::BNE => helpers::branch(s, op, !s.status.z),
-        Instruction::BCS => helpers::branch(s, op, s.status.c),
-        Instruction::BCC => helpers::branch(s, op, !s.status.c),
-        Instruction::BMI => helpers::branch(s, op, s.status.n),
-        Instruction::BPL => helpers::branch(s, op, !s.status.n),
-        Instruction::BVS => helpers::branch(s, op, s.status.v),
-        Instruction::BVC => helpers::branch(s, op, !s.status.v),
-        Instruction::BRA => helpers::branch(s, op, true),
+        Instruction::Beq => helpers::branch(s, op, s.status.z),
+        Instruction::Bne => helpers::branch(s, op, !s.status.z),
+        Instruction::Bcs => helpers::branch(s, op, s.status.c),
+        Instruction::Bcc => helpers::branch(s, op, !s.status.c),
+        Instruction::Bmi => helpers::branch(s, op, s.status.n),
+        Instruction::Bpl => helpers::branch(s, op, !s.status.n),
+        Instruction::Bvs => helpers::branch(s, op, s.status.v),
+        Instruction::Bvc => helpers::branch(s, op, !s.status.v),
+        Instruction::Bra => helpers::branch(s, op, true),
     
         // --- Stack ops ---
-        Instruction::PHA => { if helpers::acc_size(s) == 1 { memio::push8(s, s.a as u8) } else { memio::push16(s, s.a); } },
-        Instruction::PLA => { 
+        Instruction::Pha => { if helpers::acc_size(s) == 1 { memio::push8(s, s.a as u8) } else { memio::push16(s, s.a); } },
+        Instruction::Pla => { 
             s.a = if helpers::acc_size(s) == 1 { memio::pop8(s) as u16 } else { memio::pop16(s) }; 
-            helpers::set_zn(s, s.a, Width::ACC); 
+            helpers::set_zn(s, s.a, Width::Acc); 
         },
-        Instruction::PHP => memio::push8(s, s.status.pack()),
-        Instruction::PLP => { let v = memio::pop8(s); s.status.unpack(v); },
-        Instruction::PHK => { memio::push8(s, s.pb); },
-        Instruction::PLB => { s.pb = memio::pop8(s); },
-        Instruction::PHB => { memio::push8(s, s.db); },
-        Instruction::PEA => {
+        Instruction::Php => memio::push8(s, s.status.pack()),
+        Instruction::Plp => { let v = memio::pop8(s); s.status.unpack(v); },
+        Instruction::Phk => { memio::push8(s, s.pb); },
+        Instruction::Plb => { s.pb = memio::pop8(s); },
+        Instruction::Phb => { memio::push8(s, s.db); },
+        Instruction::Pea => {
             let addr = helpers::resolve_value(s, &op, Width::U16);
             memio::push16(s, addr);
         },
 
         // --- Subroutines ---
-        Instruction::JSR => { 
+        Instruction::Jsr => { 
             let addr = match op { Operand::Address(a) => a, _ => panic!("JSR expects address operand") }; 
             memio::push16(s, s.pc.wrapping_sub(1)); 
             s.pc = (addr & 0xFFFF) as u16; 
             s.pb = ((addr >> 16) & 0xFF) as u8; 
         },
-        Instruction::JSL => {
+        Instruction::Jsl => {
             let addr = match op { Operand::Address(a) => a, _ => panic!("JSL expects address operand") };
             memio::push16(s, s.pc.wrapping_sub(1)); 
             s.pc = (addr & 0xFFFF) as u16; 
             s.pb = ((addr >> 16) & 0xFF) as u8;
         }
-        Instruction::JMP => { 
+        Instruction::Jmp => { 
             let addr = match op { Operand::Address(a) => a, _ => panic!("JMP expects address operand") }; 
             s.pc = (addr & 0xFFFF) as u16; 
             s.pb = ((addr >> 16) & 0xFF) as u8; 
         },
-        Instruction::RTS => { s.pc = memio::pop16(s).wrapping_add(1); },
-        Instruction::RTL => { s.pc = memio::pop16(s).wrapping_add(1); s.pb = memio::pop8(s); },
-        Instruction::RTI => {
+        Instruction::Rts => { s.pc = memio::pop16(s).wrapping_add(1); },
+        Instruction::Rtl => { s.pc = memio::pop16(s).wrapping_add(1); s.pb = memio::pop8(s); },
+        Instruction::Rti => {
             let p = memio::pop8(s);
             let pcret = memio::pop16(s);
             let pbret = memio::pop8(s);
@@ -444,8 +444,8 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
         },
 
         // --- System ---
-        Instruction::BRK => {
-            let addr = vector::get_vector(s, vector::Vector::BRK);
+        Instruction::Brk => {
+            let addr = vector::get_vector(s, vector::Vector::Brk);
             let irqb = memio::read16(s, addr);
             
             let pbret = s.pb;
@@ -459,17 +459,17 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
             
             println!("[photon] Jumping to IRQB at {:04X}", irqb);
         },
-        Instruction::STP => { println!("[photon] Halting because of STP"); s.ready_counter = -1; },
-        Instruction::NOP => {},
+        Instruction::Stp => { println!("[photon] Halting because of STP"); s.ready_counter = -1; },
+        Instruction::Nop => {},
     
         // --- Status flags ---
-        Instruction::CLC => s.status.c = false,
-        Instruction::SEC => s.status.c = true,
-        Instruction::CLI => s.status.i = false,
-        Instruction::SEI => s.status.i = true,
-        Instruction::CLD => s.status.d = false,
-        Instruction::SED => s.status.d = true,
-        Instruction::XCE => {
+        Instruction::Clc => s.status.c = false,
+        Instruction::Sec => s.status.c = true,
+        Instruction::Cli => s.status.i = false,
+        Instruction::Sei => s.status.i = true,
+        Instruction::Cld => s.status.d = false,
+        Instruction::Sed => s.status.d = true,
+        Instruction::Xce => {
             let old_c = s.status.c;
             let old_e = s.emulation;
             s.status.c = old_e;
@@ -483,8 +483,8 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
         }
         
         // --- Special ---
-        Instruction::WDM => { s.ready_counter = -1; println!("UNIMPLEMENTED INSTRUCTION REACHED, HALTING\nThis is likely NOT a bug with the emulator, the reached instruction is reserved by spec."); },
-        Instruction::HCF(op) => { s.ready_counter = -1; println!("UNIMPLEMENTED INSTRUCTION REACHED, HALTING\nThis is likely a bug with the emulator, the executed instruction had opcode {:02X}", op); },
+        Instruction::Wdm => { s.ready_counter = -1; println!("UNIMPLEMENTED INSTRUCTION REACHED, HALTING\nThis is likely NOT a bug with the emulator, the reached instruction is reserved by spec."); },
+        Instruction::Hcf(op) => { s.ready_counter = -1; println!("UNIMPLEMENTED INSTRUCTION REACHED, HALTING\nThis is likely a bug with the emulator, the executed instruction had opcode {:02X}", op); },
         o => { s.ready_counter = -1; println!("ILLEGAL STATE REACHED, HALTING\nAttempted to execute {}, but no code existed.\nThis is most likely a bug with the emulator!", o.as_str()); },
     }
 }

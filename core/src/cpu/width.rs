@@ -1,6 +1,6 @@
 pub enum Width {
-    ACC,
-    IDX,
+    Acc,
+    Idx,
     U16,
     U8,
 }

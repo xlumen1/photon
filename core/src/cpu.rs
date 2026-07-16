@@ -11,6 +11,7 @@ mod vector;
 use crate::{state::State};
 pub use addr::AddressingMode;
 pub use status::Status;
+#[cfg(debug_assertions)]
 pub(crate) use op::{Instruction, MAPPINGS};
 
 #[cfg(debug_assertions)]
@@ -105,7 +106,7 @@ impl CPU {
     pub fn reset(&mut self) {
         helpers::set_emulation(self, true);
 
-        let addr = vector::get_vector(self, vector::Vector::RESETB);
+        let addr = vector::get_vector(self, vector::Vector::Resetb);
 
         self.ready_counter = 0; // Set ready
         self.pb = 0;
@@ -240,5 +241,11 @@ impl CPU {
 
         exec::execute(self, op.instr, operand);
 
+    }
+}
+
+impl Default for CPU {
+    fn default() -> Self {
+        Self::new()
     }
 }

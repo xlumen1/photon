@@ -13,14 +13,14 @@ pub(super) fn resolve_value(s: &mut CPU, operand: &Operand, width: Width) -> u16
         Operand::Immediate(v) => v,
         Operand::Address(addr) => {
             match width {
-                Width::ACC => {
+                Width::Acc => {
                     if acc_size(s) == 1 {
                         memio::read8(s, addr as usize) as u16
                     } else {
                         memio::read16(s, addr as usize)
                     }
                 },
-                Width::IDX => {
+                Width::Idx => {
                     if idx_size(s) == 1 {
                         memio::read8(s, addr as usize) as u16
                     } else {
@@ -33,8 +33,8 @@ pub(super) fn resolve_value(s: &mut CPU, operand: &Operand, width: Width) -> u16
         }
         Operand::None => {
             match width {
-                Width::ACC => { s.a },
-                Width::IDX => { s.x },
+                Width::Acc => { s.a },
+                Width::Idx => { s.x },
                 _ => panic!("Tried to resolve value for Operand::None, but width was invalid"),
             }
         }
@@ -51,14 +51,14 @@ pub(super) fn resolve_store(s: &mut CPU, operand: &Operand, value: u16, width: W
         Operand::Address(addr) => {
             // Memory write
             match width {
-                Width::ACC => {
+                Width::Acc => {
                     if acc_size(s) == 1 {
                         memio::write8(s, *addr as usize, value as u8);
                     } else {
                         memio::write16(s, *addr as usize, value);
                     }
                 },
-                Width::IDX => {
+                Width::Idx => {
                     if idx_size(s) == 1 {
                         memio::write8(s, *addr as usize, value as u8);
                     } else {
@@ -76,10 +76,10 @@ pub(super) fn resolve_store(s: &mut CPU, operand: &Operand, value: u16, width: W
         Operand::None => {
             // Register write
             match width {
-                Width::ACC => {
+                Width::Acc => {
                     s.a = value;
                 },
-                Width::IDX => {
+                Width::Idx => {
                     s.x = value;
                 },
                 _ => panic!("Tried to resolve store for Operand::None with invalid width"),
@@ -93,7 +93,7 @@ pub(super) fn resolve_store(s: &mut CPU, operand: &Operand, value: u16, width: W
 pub(super) fn set_emulation(s: &mut CPU, mode: bool) {
     s.emulation = mode;
     if mode {
-        let lo: u16 = (s.sp & 0x00FF) as u16;
+        let lo: u16 = s.sp & 0x00FF;
         s.sp = 0x0100u16 | (lo & 0x00FF);
     }
 }
@@ -113,7 +113,7 @@ pub(super) fn branch(s: &mut CPU, op: Operand, cond: bool) {
  * Service an IRQ
  */
 pub(super) fn service_irq(s: &mut CPU) {
-    let addr = vector::get_vector(s, vector::Vector::IRQB);
+    let addr = vector::get_vector(s, vector::Vector::Irqb);
 
     memio::push8(s, s.pb);            // Push Program Bank
     memio::push16(s, s.pc);           // Push Program Counter
@@ -130,7 +130,7 @@ pub(super) fn service_irq(s: &mut CPU) {
  * Service an NMI
  */
 pub(super) fn service_nmi(s: &mut CPU) {
-    let addr = vector::get_vector(s, vector::Vector::NMIB);
+    let addr = vector::get_vector(s, vector::Vector::Nmib);
 
     memio::push8(s, s.pb);            // Push Program Bank
     memio::push16(s, s.pc);           // Push Program Counter
@@ -150,8 +150,8 @@ pub(super) fn set_zn(s: &mut CPU, value: u16, width: Width) {
     let size = match width {
         Width::U8  => 1,
         Width::U16 => 2,
-        Width::ACC => acc_size(s),
-        Width::IDX => idx_size(s),
+        Width::Acc => acc_size(s),
+        Width::Idx => idx_size(s),
     } as usize;
     
     let (mask, nmask) = if size == 1 {
@@ -168,12 +168,12 @@ pub(super) fn set_zn(s: &mut CPU, value: u16, width: Width) {
  * Convert BCD value to binary value
  */
 pub(super) fn convert_to_bin(value: u16) -> u16 {
-    let d0 = (value >> 00) & 15; 
-    let d1 = (value >> 04) & 15;
-    let d2 = (value >> 08) & 15;
+    let d0 = value & 15; 
+    let d1 = (value >> 4) & 15;
+    let d2 = (value >> 8) & 15;
     let d3 = (value >> 12) & 15;
 
-    (d0 * 1) + (d1 * 10) + (d2 * 100) + (d3 * 1000)
+    d0 + (d1 * 10) + (d2 * 100) + (d3 * 1000)
 }
 
 /**
@@ -182,11 +182,11 @@ pub(super) fn convert_to_bin(value: u16) -> u16 {
 pub(super) fn convert_to_bcd(value: u16) -> u16 {
     let mut v = value;
     let d0 = v % 10;
-    v = v / 10;
+    v /= 10;
     let d1 = v % 10;
-    v = v / 10;
+    v /= 10;
     let d2 = v % 10;
-    v = v / 10;
+    v /= 10;
     let d3 = v % 10;
-    return (d0 << 0) | (d1 << 4) | (d2 << 8) | (d3 << 12)
+    d0 | (d1 << 4) | (d2 << 8) | (d3 << 12)
 }

@@ -124,28 +124,28 @@ pub(super) fn addr_blk_mov(s: &mut CPU) -> Operand {
 
 pub(super) fn addr_dir_ind_x(s: &mut CPU) -> Operand {
     let offset = memio::fetch8(s) as u16;
-    let addr = (s.dp as u16).wrapping_add(offset).wrapping_add(s.x as u16);
+    let addr = s.dp.wrapping_add(offset).wrapping_add(s.x);
 
     Operand::Address(((s.db as u32) << 16) + addr as u32)
 }
 
 pub(super) fn addr_dir_x(s: &mut CPU) -> Operand {
     let offset = memio::fetch8(s) as u16;
-    let addr = (s.dp as u16).wrapping_add(offset).wrapping_add(s.x as u16);
+    let addr = s.dp.wrapping_add(offset).wrapping_add(s.x);
 
     Operand::Address(addr as u32)
 }
 
 pub(super) fn addr_dir_y(s: &mut CPU) -> Operand {
     let offset = memio::fetch8(s) as u16;
-    let addr = (s.dp as u16).wrapping_add(offset).wrapping_add(s.y as u16);
+    let addr = s.dp.wrapping_add(offset).wrapping_add(s.y);
 
     Operand::Address(addr as u32)
 }
 
 pub(super) fn addr_dir_ind_y(s: &mut CPU) -> Operand {
     let offset = memio::fetch8(s) as u16;
-    let addr = (s.dp as u16).wrapping_add(offset).wrapping_add(s.y as u16);
+    let addr = s.dp.wrapping_add(offset).wrapping_add(s.y);
     let b = (s.db as u32) << 16;
 
     Operand::Address((addr as u32) + b)
@@ -167,7 +167,7 @@ pub(super) fn addr_dir_ind_long(s: &mut CPU) -> Operand {
 
 pub(super) fn addr_dir_ind(s: &mut CPU) -> Operand {
     let offset = memio::fetch8(s) as u16;
-    let addr = (s.dp as u16).wrapping_add(offset);
+    let addr = s.dp.wrapping_add(offset);
     let b = (s.db as u32) << 16;
 
     Operand::Address(addr as u32 + b)
@@ -175,7 +175,7 @@ pub(super) fn addr_dir_ind(s: &mut CPU) -> Operand {
 
 pub(super) fn addr_dir(s: &mut CPU) -> Operand {
     let offset = memio::fetch8(s) as u16;
-    let addr = (s.dp as u16).wrapping_add(offset);
+    let addr = s.dp.wrapping_add(offset);
 
     Operand::Address(addr as u32)
 }

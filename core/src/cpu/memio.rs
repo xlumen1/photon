@@ -38,7 +38,7 @@ pub(super) fn fetch16(s: &mut CPU) -> u16 {
 }
 
 pub(super) fn push8(s: &mut CPU, value: u8) {
-    let addr = (0x00u32 << 16) | (s.sp as u32);
+    let addr = s.sp as u32;
     (s.memory_write)(addr as usize, value);
 
     if s.emulation {
@@ -65,7 +65,7 @@ pub(super) fn pop8(s: &mut CPU) -> u8 {
     } else {
         s.sp = s.sp.wrapping_add(1);
     }
-    let addr = (0x00u32 << 16) | (s.sp as u32);
+    let addr = s.sp as u32;
     read8(s, addr as usize)
 }
 

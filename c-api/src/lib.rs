@@ -22,14 +22,13 @@ pub struct State {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn p816CreateCpu() -> *mut CPU {
+pub unsafe extern "C" fn p816CreateCpu() -> *mut CPU {
     let cpu: Box<CPU> = Box::new(CPU::new());
-    let ptr = Box::into_raw(cpu);
-    ptr
+    Box::into_raw(cpu)
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn p816DestroyCpu(cpu: *mut CPU) {
+pub unsafe extern "C" fn p816DestroyCpu(cpu: *mut CPU) {
     if cpu.is_null() { return; }
         // Recreate the Box to drop it and free memory
         unsafe { let _ = Box::from_raw(cpu); }
@@ -38,7 +37,7 @@ pub extern "C" fn p816DestroyCpu(cpu: *mut CPU) {
 
 
 #[unsafe(no_mangle)]
-pub extern "C" fn p816SetCallbacks(cpu: *mut CPU, read_cb: MemReadCb, write_cb: MemWriteCb,) {
+pub unsafe extern "C" fn p816SetCallbacks(cpu: *mut CPU, read_cb: MemReadCb, write_cb: MemWriteCb,) {
     assert!(!cpu.is_null(), "cpu pointer is null");
     let cpu_ref: &mut CPU = unsafe { &mut *cpu };
     
@@ -46,20 +45,20 @@ pub extern "C" fn p816SetCallbacks(cpu: *mut CPU, read_cb: MemReadCb, write_cb: 
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn p816Cycle(cpu: *mut CPU) {
+pub unsafe extern "C" fn p816Cycle(cpu: *mut CPU) {
     assert!(!cpu.is_null(), "cpu pointer is null");
     let cpu_ref: &mut CPU = unsafe { &mut *cpu };
     cpu_ref.cycle();
 }
 #[unsafe(no_mangle)]
-pub extern "C" fn p816Step(cpu: *mut CPU) -> u64 {
+pub unsafe extern "C" fn p816Step(cpu: *mut CPU) -> u64 {
     assert!(!cpu.is_null(), "cpu pointer is null");
     let cpu_ref: &mut CPU = unsafe { &mut *cpu };
     cpu_ref.step()
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn p816ExportState(cpu: *const CPU) -> State {
+pub unsafe extern "C" fn p816ExportState(cpu: *const CPU) -> State {
     assert!(!cpu.is_null(), "cpu pointer is null");
     let cpu_ref = unsafe { &*cpu };
 
@@ -83,7 +82,7 @@ pub extern "C" fn p816ExportState(cpu: *const CPU) -> State {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn p816ImportState(cpu: *mut CPU, state: State) {
+pub unsafe extern "C" fn p816ImportState(cpu: *mut CPU, state: State) {
     assert!(!cpu.is_null(), "cpu pointer is null");
     let cpu_ref = unsafe { &mut *cpu };
 
@@ -104,7 +103,7 @@ pub extern "C" fn p816ImportState(cpu: *mut CPU, state: State) {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn p816Reset(cpu: *mut CPU) {
+pub unsafe extern "C" fn p816Reset(cpu: *mut CPU) {
     assert!(!cpu.is_null(), "cpu pointer is null");
 
     let cpu_ref = unsafe { &mut *cpu };
@@ -112,7 +111,7 @@ pub extern "C" fn p816Reset(cpu: *mut CPU) {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn p816IsHalted(cpu: *const CPU) -> u8 {
+pub unsafe extern "C" fn p816IsHalted(cpu: *const CPU) -> u8 {
     assert!(!cpu.is_null(), "cpu pointer is null");
 
     let cpu_ref = unsafe { &*cpu };
@@ -120,7 +119,7 @@ pub extern "C" fn p816IsHalted(cpu: *const CPU) -> u8 {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn p816IsReady(cpu: *const CPU) -> u8 {
+pub unsafe extern "C" fn p816IsReady(cpu: *const CPU) -> u8 {
     assert!(!cpu.is_null(), "cpu pointer is null");
 
     let cpu_ref = unsafe { &*cpu };
@@ -128,7 +127,7 @@ pub extern "C" fn p816IsReady(cpu: *const CPU) -> u8 {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn p816RequestNMI(cpu: *mut CPU) {
+pub unsafe extern "C" fn p816RequestNMI(cpu: *mut CPU) {
     assert!(!cpu.is_null(), "cpu pointer is null");
 
     let cpu_ref = unsafe { &mut *cpu };
@@ -136,7 +135,7 @@ pub extern "C" fn p816RequestNMI(cpu: *mut CPU) {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn p816SetIRQ(cpu: *mut CPU, mode: bool) {
+pub unsafe extern "C" fn p816SetIRQ(cpu: *mut CPU, mode: bool) {
     assert!(!cpu.is_null(), "cpu pointer is null");
 
     let cpu_ref = unsafe { &mut *cpu };
