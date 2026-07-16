@@ -1,5 +1,4 @@
-use crate::operand::Operand;
-use super::{CPU, helpers, memio};
+use super::{CPU, helpers, memio, operand::Operand};
 
 #[derive(Copy, Clone)]
 pub enum AddressingMode {

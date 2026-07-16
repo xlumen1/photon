@@ -1,4 +1,4 @@
-use super::{CPU, Width, Operand, memio};
+use super::{CPU, width::Width, operand::Operand, memio};
 
 pub(super) fn acc_size(s: &mut CPU) -> u8 { if s.status.m { 1 } else { 2 } }
 
