@@ -1,7 +1,8 @@
 [workspace]
 members = [
     "core",
-    "c-api"
+    "c-api",
+    "emu-base"
 ]
 
 resolver = "3"
