@@ -368,6 +368,10 @@ pub(super) fn execute(s: &mut CPU, instr: Instruction, op: Operand) {
         Instruction::REP => {
             let val = helpers::resolve_value(s, &op, Width::U8) as u8;
             s.status.clear_bits(val);
+            if s.emulation {
+                s.status.m = true;
+                s.status.x = true;
+            }
         },
         Instruction::SEP => {
             let val = helpers::resolve_value(s, &op, Width::U8) as u8;
