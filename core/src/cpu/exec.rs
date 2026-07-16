@@ -1,5 +1,5 @@
-use crate::{operand::Operand, width::Width, op::{Instruction}};
-use super::{CPU, helpers, memio};
+use crate::{operand::Operand, width::Width};
+use super::{CPU, helpers, memio, op::Instruction};
 
 /**
  * Execute an instruction, should only need to be used internally

@@ -3,8 +3,9 @@ mod addr;
 mod helpers;
 mod memio;
 mod status;
+mod op;
 
-use crate::{state::State, width::Width, operand::Operand, op::OPCODES};
+use crate::{state::State, width::Width, operand::Operand};
 pub use addr::AddressingMode;
 pub use status::Status;
 
@@ -188,7 +189,7 @@ impl CPU {
         let opcode = memio::fetch8(self);
         #[cfg(debug_assertions)]
         let source = self.pc as u32 - 1 + ((self.pb as u32) << 16);
-        let op = &OPCODES[opcode as usize];
+        let op = &op::OPCODES[opcode as usize];
 
         helpers::inst_cycles(self, op.cycles as i16);
 

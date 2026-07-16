@@ -1,5 +1,4 @@
 mod cpu;
-mod op;
 mod operand;
 mod width;
 mod state;
