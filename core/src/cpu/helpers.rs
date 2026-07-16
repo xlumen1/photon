@@ -163,3 +163,30 @@ pub(super) fn set_zn(s: &mut CPU, value: u16, width: Width) {
     s.status.z = (value & mask) == 0;
     s.status.n = (value & nmask) != 0;
 }
+
+/**
+ * Convert BCD value to binary value
+ */
+pub(super) fn convert_to_bin(value: u16) -> u16 {
+    let d0 = (value >> 00) & 15; 
+    let d1 = (value >> 04) & 15;
+    let d2 = (value >> 08) & 15;
+    let d3 = (value >> 12) & 15;
+
+    (d0 * 1) + (d1 * 10) + (d2 * 100) + (d3 * 1000)
+}
+
+/**
+ * Convert binary value to BCD
+ */
+pub(super) fn convert_to_bcd(value: u16) -> u16 {
+    let mut v = value;
+    let d0 = v % 10;
+    v = v / 10;
+    let d1 = v % 10;
+    v = v / 10;
+    let d2 = v % 10;
+    v = v / 10;
+    let d3 = v % 10;
+    return (d0 << 0) | (d1 << 4) | (d2 << 8) | (d3 << 12)
+}
