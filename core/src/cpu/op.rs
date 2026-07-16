@@ -196,6 +196,13 @@ impl Instruction {
             Instruction::HCF(_) => "HCF[Virtual]"
         }
     }
+
+    pub fn opcodes(&self) -> Vec<u8> {
+        MAPPINGS.iter()
+                .filter(|(instr,_)| std::mem::discriminant(instr) == std::mem::discriminant(self))
+                .map(|(_,code_slice)| code_slice[0])
+                .collect()
+    }
 }
 
 macro_rules! generate_table {
@@ -223,6 +230,12 @@ macro_rules! generate_table {
 
             table
         };
+
+        pub const MAPPINGS: &[(Instruction, &[u8])] = &[
+            $(
+                (Instruction::$instr, &[$code]),
+            )*
+        ];
     }
 }
 

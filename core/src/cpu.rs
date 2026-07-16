@@ -11,6 +11,7 @@ mod vector;
 use crate::{state::State};
 pub use addr::AddressingMode;
 pub use status::Status;
+pub(crate) use op::{Instruction, MAPPINGS};
 
 #[cfg(debug_assertions)]
 use colored::Colorize; 
